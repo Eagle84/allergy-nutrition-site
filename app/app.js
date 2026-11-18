@@ -112,9 +112,7 @@ function profile() {
 function analysis() {
   const a = state.analysis; if (!a) return needAnalysis();
   const m = a.meta, ca = a.clinical_analytics;
-  const status = { HIT_COMPOSITE: `נשלף מיידית מהקאש (${m.execution_time_ms}ms) · מבוסס על ${m.studies_analyzed_count} מחקרים`,
-    HIT_ATOMIC_MERGED: `שולב מפרופילים שמורים (${m.execution_time_ms}ms) · מבוסס על ${m.studies_analyzed_count} מחקרים`,
-    MISS_FRESH_RAG: `ניתוח חדש מבוסס ${m.studies_analyzed_count} מחקרים` }[m.cache_status] ?? '';
+  const status = `מבוסס על ${m.studies_analyzed_count} מחקרים`;
   const title = a.normalized_conditions.map((c) => c.display_name_he.replace(/\s*\(.*\)$/, '')).join(' + ');
   const fm = a.food_matrix;
   return `<div class="screen"><h2 class="t">ניתוח ${a.normalized_conditions.length > 1 ? 'משולב' : ''}: ${esc(title)}</h2>
