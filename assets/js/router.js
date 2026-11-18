@@ -1,6 +1,7 @@
 // Device routing and admin allowlist. Pure functions so they can be unit-tested with node --test.
 
 export const PACKAGE_ID = 'com.echlonlabs.allergynutrition';
+export const APP_SCHEME = 'nutrition';
 export const PLAY_URL = `https://play.google.com/store/apps/details?id=${PACKAGE_ID}`;
 
 // Admins skip every paywall. Only SHA-256 hashes of admin emails live in client code (this file is public);
@@ -23,14 +24,13 @@ export function detectPlatform({ userAgent = '', maxTouchPoints = 0 } = {}) {
 }
 
 /**
- * Chrome on Android understands intent: URLs. This one launches the installed app (MAIN/LAUNCHER of the
- * package) and, when the app is not installed, falls back to the Play Store listing.
+ * Chrome on Android understands intent: URLs but always adds the BROWSABLE category, which the launcher
+ * filter lacks, so a bare MAIN/LAUNCHER intent never resolves. The app therefore declares a BROWSABLE
+ * nutrition://open filter, and this URL targets it. When the app is not installed Chrome follows the
+ * fallback URL (the Play listing).
  */
 export function androidLaunchUrl(fallback = PLAY_URL) {
-  return (
-    'intent://#Intent;action=android.intent.action.MAIN;category=android.intent.category.LAUNCHER;' +
-    `package=${PACKAGE_ID};S.browser_fallback_url=${encodeURIComponent(fallback)};end`
-  );
+  return `intent://open#Intent;scheme=${APP_SCHEME};package=${PACKAGE_ID};S.browser_fallback_url=${encodeURIComponent(fallback)};end`;
 }
 
 export function isLocalHost(hostname) {
