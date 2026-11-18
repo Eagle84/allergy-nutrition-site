@@ -1,0 +1,424 @@
+{
+  "meta": {
+    "cache_key": "profile:celiac_disease+ibs_irritable_bowel_syndrome+latex_fruit_syndrome:kb_v1_2026_11",
+    "cache_status": "HIT_ATOMIC_MERGED",
+    "execution_time_ms": 38,
+    "knowledge_base_version": "kb_v1_2026_11",
+    "studies_analyzed_count": 8,
+    "disclaimer_he": "המידע מבוסס על סקירת מחקרים קליניים ונועד להמלצה תזונתית בלבד."
+  },
+  "normalized_conditions": [
+    {
+      "input_term": "מעי רגיז",
+      "canonical_slug": "ibs_irritable_bowel_syndrome",
+      "display_name_he": "תסמונת המעי הרגיז (IBS)",
+      "medical_code": "ICD-11: DD91.0",
+      "biological_mechanism_he": "רגישות יתר ויסצרלית והתססה מהירה של פחמימות קצרות-שרשרת (FODMAPs)."
+    },
+    {
+      "input_term": "צליאק",
+      "canonical_slug": "celiac_disease",
+      "display_name_he": "צליאק",
+      "medical_code": "ICD-11: DA95",
+      "biological_mechanism_he": "תגובה אוטואימונית לגלוטן הפוגעת בסיסי המעי הדק ובספיגת מיקרונוטריינטים."
+    },
+    {
+      "input_term": "לטקס",
+      "canonical_slug": "latex_fruit_syndrome",
+      "display_name_he": "תסמונת לטקס-פרי",
+      "medical_code": "ICD-11: 4A85",
+      "biological_mechanism_he": "תגובה צולבת של נוגדני IgE בין חלבוני לטקס (Hev b) לחלבונים דומים בפירות וירקות."
+    }
+  ],
+  "clinical_analytics": {
+    "headline_efficacy_pct": 85.0,
+    "headline_summary_he": "ריפוי רירית המעי תחת דיאטה קפדנית ללא גלוטן",
+    "statistics_chart": [
+      {
+        "category": "efficacy",
+        "label_he": "ריפוי רירית תחת דיאטה ללא גלוטן",
+        "value_pct": 85.0,
+        "citation": {
+          "pmid": "23609613",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/23609613/"
+        }
+      },
+      {
+        "category": "triggers",
+        "label_he": "אבוקדו, בננה, קיווי, ערמונים כטריגרים עיקריים",
+        "value_pct": 80.0,
+        "citation": {
+          "pmid": "39064262",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/39064262/"
+        }
+      },
+      {
+        "category": "triggers",
+        "label_he": "פרוקטנים (שום/בצל/חיטה)",
+        "value_pct": 77.0,
+        "citation": {
+          "pmid": "24357350",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/24357350/"
+        }
+      },
+      {
+        "category": "efficacy",
+        "label_he": "הקלה בתסמינים תחת דיאטה דלת FODMAP",
+        "value_pct": 76.0,
+        "citation": {
+          "pmid": "24357350",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/24357350/"
+        }
+      },
+      {
+        "category": "prevalence",
+        "label_he": "אלרגיים ללטקס עם תגובה צולבת לפירות",
+        "value_pct": 40.0,
+        "citation": {
+          "pmid": "39064262",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/39064262/"
+        }
+      },
+      {
+        "category": "deficiency",
+        "label_he": "חסר ברזל באבחון",
+        "value_pct": 32.0,
+        "citation": {
+          "pmid": "23609613",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/23609613/"
+        }
+      },
+      {
+        "category": "deficiency",
+        "label_he": "חסר ויטמין D באבחון",
+        "value_pct": 20.0,
+        "citation": {
+          "pmid": "23609613",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/23609613/"
+        }
+      }
+    ],
+    "nutritional_deficiency_risks": [
+      {
+        "nutrient_he": "ברזל (Iron)",
+        "risk_prevalence_pct": 50.0,
+        "recommended_daily_target": "18 mg",
+        "compensating_safe_foods_he": [
+          "סלמון",
+          "תרד מבושל",
+          "גרעיני דלעת",
+          "קינואה",
+          "בקר"
+        ]
+      },
+      {
+        "nutrient_he": "ויטמין D",
+        "risk_prevalence_pct": 20.0,
+        "recommended_daily_target": "800 IU",
+        "compensating_safe_foods_he": [
+          "סלמון",
+          "ביצים",
+          "סרדינים"
+        ]
+      },
+      {
+        "nutrient_he": "חומצה פולית",
+        "risk_prevalence_pct": 20.0,
+        "recommended_daily_target": "400 mcg",
+        "compensating_safe_foods_he": [
+          "ברוקולי"
+        ]
+      }
+    ]
+  },
+  "food_matrix": {
+    "allowed_foods": [
+      {
+        "name_he": "קינואה",
+        "category_he": "דגנים ופחמימות",
+        "benefit_badge_he": "בטוח לצריכה · עשיר בברזל וחלבון",
+        "scientific_rationale_he": "דגן נטול גלוטן ודל-FODMAP שאינו מעורר תסיסה במעי.",
+        "citation_pmid": "24357350"
+      },
+      {
+        "name_he": "אורז",
+        "category_he": "דגנים ופחמימות",
+        "benefit_badge_he": "בטוח לצריכה",
+        "scientific_rationale_he": "דל-FODMAP ונסבל היטב.",
+        "citation_pmid": "24357350"
+      },
+      {
+        "name_he": "סלמון",
+        "category_he": "דגים",
+        "benefit_badge_he": "עשיר באומגה 3",
+        "scientific_rationale_he": "חלבון ואומגה 3 ללא FODMAP.",
+        "citation_pmid": "24357350"
+      },
+      {
+        "name_he": "גזר",
+        "category_he": "ירקות",
+        "benefit_badge_he": "בטוח לצריכה",
+        "scientific_rationale_he": "ירק דל-FODMAP.",
+        "citation_pmid": "24357350"
+      },
+      {
+        "name_he": "גבינה קשה",
+        "category_he": "מוצרי חלב",
+        "benefit_badge_he": "דל לקטוז",
+        "scientific_rationale_he": "דלת לקטוז.",
+        "citation_pmid": "24357350"
+      },
+      {
+        "name_he": "בקר",
+        "category_he": "בשר ועוף",
+        "benefit_badge_he": "עשיר בברזל",
+        "scientific_rationale_he": "ברזל הם זמין.",
+        "citation_pmid": "23609613"
+      },
+      {
+        "name_he": "ביצים",
+        "category_he": "ביצים",
+        "benefit_badge_he": "ויטמין D",
+        "scientific_rationale_he": "ויטמין D וחלבון.",
+        "citation_pmid": "23609613"
+      },
+      {
+        "name_he": "חזה עוף",
+        "category_he": "בשר ועוף",
+        "benefit_badge_he": "בטוח",
+        "scientific_rationale_he": "ללא תגובה צולבת.",
+        "citation_pmid": "39064262"
+      },
+      {
+        "name_he": "אוכמניות",
+        "category_he": "פירות",
+        "benefit_badge_he": "בטוח",
+        "scientific_rationale_he": "פרי ללא תגובה צולבת מתועדת.",
+        "citation_pmid": "39064262"
+      }
+    ],
+    "forbidden_foods": [
+      {
+        "name_he": "שום",
+        "category_he": "ירקות ותבלינים",
+        "severity_level": "HIGH_TRIGGER",
+        "warning_badge_he": "עתיר פרוקטנים (High-FODMAP)",
+        "scientific_rationale_he": "מכיל אוליגוסכרידים שאינם נספגים במעי הדק ועוברים התססה מהירה.",
+        "safe_substitute_he": "שמן זית מושרה בשום",
+        "citation_pmid": "24357350"
+      },
+      {
+        "name_he": "בצל",
+        "category_he": "ירקות ותבלינים",
+        "severity_level": "HIGH_TRIGGER",
+        "warning_badge_he": "עתיר פרוקטנים (High-FODMAP)",
+        "scientific_rationale_he": "עתיר פרוקטנים.",
+        "safe_substitute_he": "החלק הירוק של עירית",
+        "citation_pmid": "24357350"
+      },
+      {
+        "name_he": "חיטה",
+        "category_he": "דגנים ופחמימות",
+        "severity_level": "HIGH_TRIGGER",
+        "warning_badge_he": "מכיל גלוטן",
+        "scientific_rationale_he": "מכילה גלוטן.",
+        "safe_substitute_he": "אורז או קינואה",
+        "citation_pmid": "23609613"
+      },
+      {
+        "name_he": "שעורה",
+        "category_he": "דגנים ופחמימות",
+        "severity_level": "HIGH_TRIGGER",
+        "warning_badge_he": "מכיל גלוטן",
+        "scientific_rationale_he": "מכילה גלוטן.",
+        "safe_substitute_he": "כוסמת",
+        "citation_pmid": "23609613"
+      },
+      {
+        "name_he": "שיפון",
+        "category_he": "דגנים ופחמימות",
+        "severity_level": "HIGH_TRIGGER",
+        "warning_badge_he": "מכיל גלוטן",
+        "scientific_rationale_he": "מכיל גלוטן.",
+        "safe_substitute_he": "לחם ללא גלוטן",
+        "citation_pmid": "23609613"
+      },
+      {
+        "name_he": "אבוקדו",
+        "category_he": "פירות",
+        "severity_level": "HIGH_TRIGGER",
+        "warning_badge_he": "תגובה צולבת ללטקס",
+        "scientific_rationale_he": "חלבון Hev b 6 דומה מבנית לחלבוני אבוקדו.",
+        "safe_substitute_he": "טחינה או שמן זית",
+        "citation_pmid": "39064262"
+      },
+      {
+        "name_he": "בננה",
+        "category_he": "פירות",
+        "severity_level": "HIGH_TRIGGER",
+        "warning_badge_he": "תגובה צולבת ללטקס",
+        "scientific_rationale_he": "תגובה צולבת מתועדת.",
+        "safe_substitute_he": "אוכמניות",
+        "citation_pmid": "39064262"
+      },
+      {
+        "name_he": "קיווי",
+        "category_he": "פירות",
+        "severity_level": "HIGH_TRIGGER",
+        "warning_badge_he": "תגובה צולבת ללטקס",
+        "scientific_rationale_he": "תגובה צולבת מתועדת.",
+        "safe_substitute_he": "תותים",
+        "citation_pmid": "39064262"
+      },
+      {
+        "name_he": "ערמונים",
+        "category_he": "פירות",
+        "severity_level": "HIGH_TRIGGER",
+        "warning_badge_he": "תגובה צולבת ללטקס",
+        "scientific_rationale_he": "תגובה צולבת מתועדת.",
+        "safe_substitute_he": "שקדים",
+        "citation_pmid": "39064262"
+      },
+      {
+        "name_he": "תפוחים",
+        "category_he": "פירות",
+        "severity_level": "MODERATE_TRIGGER",
+        "warning_badge_he": "High-FODMAP",
+        "scientific_rationale_he": "עודף פרוקטוז ופוליאולים.",
+        "safe_substitute_he": "תותים או קיווי",
+        "citation_pmid": "24357350"
+      },
+      {
+        "name_he": "בירה",
+        "category_he": "משקאות",
+        "severity_level": "MODERATE_TRIGGER",
+        "warning_badge_he": "מכיל גלוטן",
+        "scientific_rationale_he": "מיוצרת משעורה.",
+        "safe_substitute_he": "יין או סיידר",
+        "citation_pmid": "23609613"
+      },
+      {
+        "name_he": "קסאווה",
+        "category_he": "דגנים ופחמימות",
+        "severity_level": "MODERATE_TRIGGER",
+        "warning_badge_he": "תגובה צולבת / טריגר נסתר",
+        "scientific_rationale_he": "שורש קסאווה מכיל חלבונים דומים ללטקס ומדווח כטריגר נסתר.",
+        "safe_substitute_he": "",
+        "citation_pmid": "39064262"
+      },
+      {
+        "name_he": "קמח טפיוקה",
+        "category_he": "דגנים ופחמימות",
+        "severity_level": "MODERATE_TRIGGER",
+        "warning_badge_he": "תגובה צולבת / טריגר נסתר",
+        "scientific_rationale_he": "קמח טפיוקה מיוצר מקסאווה ונושא את אותו סיכון.",
+        "safe_substitute_he": "",
+        "citation_pmid": "39064262"
+      },
+      {
+        "name_he": "עדשים",
+        "category_he": "קטניות",
+        "severity_level": "MODERATE_TRIGGER",
+        "warning_badge_he": "טריגר לפי מנגנון המצב",
+        "scientific_rationale_he": "מסווג בטקסונומיה כטריגר (gos) למצב בפרופיל.",
+        "safe_substitute_he": "",
+        "citation_pmid": "24357350"
+      }
+    ],
+    "hidden_conflict_alerts": [
+      {
+        "title_he": "אזהרת התנגשות בין מצבים",
+        "item_he": "קסאווה",
+        "explanation_he": "שורש קסאווה מכיל חלבונים דומים ללטקס ומדווח כטריגר נסתר.",
+        "citation_pmid": "39064262"
+      },
+      {
+        "title_he": "אזהרת התנגשות בין מצבים",
+        "item_he": "קמח טפיוקה",
+        "explanation_he": "קמח טפיוקה מיוצר מקסאווה ונושא את אותו סיכון.",
+        "citation_pmid": "39064262"
+      },
+      {
+        "title_he": "אזהרת התנגשות בין מצבים",
+        "item_he": "אבוקדו",
+        "explanation_he": "חלבון Hev b 6 דומה מבנית לחלבוני אבוקדו.",
+        "citation_pmid": "39064262"
+      },
+      {
+        "title_he": "אזהרת התנגשות בין מצבים",
+        "item_he": "תפוחים",
+        "explanation_he": "עודף פרוקטוז ופוליאולים.",
+        "citation_pmid": "24357350"
+      },
+      {
+        "title_he": "אזהרת התנגשות בין מצבים",
+        "item_he": "עדשים",
+        "explanation_he": "מותר במצב אחד אך מסווג כטריגר (gos) עבור מצב אחר בפרופיל המשולב.",
+        "citation_pmid": "24357350"
+      }
+    ]
+  },
+  "personalized_diet_plan": {
+    "daily_targets": {
+      "calories_kcal": 1916,
+      "protein_g": 90,
+      "carbs_g": 206,
+      "fat_g": 66
+    },
+    "meals": [
+      {
+        "meal_type": "breakfast",
+        "title_he": "ארוחת בוקר (08:00)",
+        "dish_name_he": "דייסת שיבולת שועל ללא גלוטן עם פירות יער ושקדים",
+        "ingredients_he": [
+          "שיבולת שועל נקייה מגלוטן",
+          "חלב שקדים",
+          "אוכמניות",
+          "שקדים"
+        ],
+        "clinical_note_he": "סיבים מסיסים עדינים ללא עומס לקטוז או פרוקטוז עודף.",
+        "swap_options_he": [
+          "חביתת עשבי תיבול עם פריכיות אורז וגבינה קשה"
+        ]
+      },
+      {
+        "meal_type": "lunch",
+        "title_he": "ארוחת צהריים (13:00)",
+        "dish_name_he": "בקר מוקפץ עם אורז וברוקולי",
+        "ingredients_he": [
+          "בקר",
+          "אורז",
+          "ברוקולי"
+        ],
+        "clinical_note_he": "ברזל הם וחומצה פולית.",
+        "swap_options_he": []
+      },
+      {
+        "meal_type": "dinner",
+        "title_he": "ארוחת ערב (19:00)",
+        "dish_name_he": "סלמון בתנור עם ברוקולי",
+        "ingredients_he": [
+          "סלמון",
+          "ברוקולי"
+        ],
+        "clinical_note_he": "אומגה 3 וסיבים במנה קטנה.",
+        "swap_options_he": [
+          "טופו מוקפץ עם אורז"
+        ]
+      },
+      {
+        "meal_type": "snack",
+        "title_he": "ביניים (16:00)",
+        "dish_name_he": "אוכמניות עם שקדים",
+        "ingredients_he": [
+          "אוכמניות",
+          "שקדים"
+        ],
+        "clinical_note_he": "חטיף ללא טריגרים.",
+        "swap_options_he": [
+          "גזר עם טחינה"
+        ]
+      }
+    ]
+  }
+}
