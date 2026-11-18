@@ -1,10 +1,10 @@
-// Firebase web config. These values are public identifiers (not secrets); access is enforced by
-// Firebase Auth and firestore.rules. Leave `null` until the Firebase project exists: the site then
-// runs in demo mode and the Google button explains that sign-in is being set up.
-export const firebaseConfig = null;
-/* Example shape:
+// Firebase web config for project "allergy-nutrition". These are public identifiers, not secrets:
+// access is enforced by Firebase Auth (authorized domains) and Firestore security rules.
 export const firebaseConfig = {
-  apiKey: '...', authDomain: '<project>.firebaseapp.com', projectId: '<project>',
-  storageBucket: '<project>.appspot.com', messagingSenderId: '...', appId: '...'
+  apiKey: 'AIzaSyBGAzA6Yf5ZIoE6GS2ZN83EuBOaEInOtzY',
+  authDomain: 'allergy-nutrition.firebaseapp.com',
+  projectId: 'allergy-nutrition',
+  storageBucket: 'allergy-nutrition.firebasestorage.app',
+  messagingSenderId: '574977986971',
+  appId: '1:574977986971:web:153e070bbbf7015ac2913e',
 };
-*/

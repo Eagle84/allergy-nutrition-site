@@ -60,7 +60,7 @@ async function saveProfile(user) {
   const { db, fsMod } = await load();
   await fsMod.setDoc(
     fsMod.doc(db, 'users', user.uid),
-    { email: user.email, name: user.name || '', lastLoginAt: fsMod.serverTimestamp(), createdAt: fsMod.serverTimestamp() },
+    { email: user.email, name: user.name || '', lastLoginAt: fsMod.serverTimestamp() },
     { merge: true },
   );
 }

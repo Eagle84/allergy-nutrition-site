@@ -22,11 +22,12 @@ const state = {
 if (!store.get('trialStart', null)) store.set('trialStart', Date.now());
 const trialDaysLeft = () => Math.max(0, 7 - Math.floor((Date.now() - store.get('trialStart', Date.now())) / 86400000));
 
-const EMOJI = [[/דג|סלמון|טונה|סרדין/, '🐟'], [/עוף|הודו/, '🍗'], [/בקר|בשר/, '🥩'], [/אורז/, '🍚'], [/קינואה|דגנ|שיבולת/, '🥣'],
+const EMOJI = [[/(^|\s)דג(ים)?(\s|$)|סלמון|טונה|סרדינ/, '🐟'], [/עוף|הודו/, '🍗'], [/בקר|בשר/, '🥩'], [/אורז/, '🍚'], [/קינואה|דגנ|שיבולת/, '🥣'],
   [/חיטה|גלוטן|לחם|שעורה|שיפון/, '🌾'], [/חלב|גבינ|יוגורט|שמנת/, '🥛'], [/בוטנ/, '🥜'], [/שקד|אגוז/, '🌰'], [/אבוקדו/, '🥑'],
   [/בננה/, '🍌'], [/תפוח|אגס/, '🍎'], [/קיווי/, '🥝'], [/שום/, '🧄'], [/בצל/, '🧅'], [/גזר/, '🥕'], [/ברוקולי|ירק|תרד|כרוב/, '🥦'],
   [/ביצ/, '🥚'], [/קפה/, '☕'], [/שוקולד/, '🍫'], [/עגבני/, '🍅'], [/עדש|קטני|חומוס/, '🫘']];
-const emoji = (name, cat = '') => (EMOJI.find(([re]) => re.test(name + ' ' + cat)) || [0, '🍽️'])[1];
+const CAT_EMOJI = { 'דגנים ופחמימות': '🌾', 'דגים ופירות ים': '🐟', 'ירקות': '🥦', 'ירקות ותבלינים': '🥦', 'פירות': '🍎', 'מוצרי חלב': '🥛', 'בשר ועוף': '🍗', 'קטניות': '🫘', 'אגוזים וזרעים': '🌰', 'ביצים': '🥚', 'משקאות': '🥤', 'ממתקים': '🍬', 'שמנים': '🫒' };
+const emoji = (name, cat = '') => (EMOJI.find(([re]) => re.test(name)) || [0, CAT_EMOJI[cat] || '🍽️'])[1];
 const pmidUrl = (p) => `https://pubmed.ncbi.nlm.nih.gov/${encodeURIComponent(p)}/`;
 
 // ---- data ------------------------------------------------------------------------------------------------------
@@ -87,7 +88,7 @@ function home() {
     ${planPill()}
     <label class="search">🔍<input id="q" value="${esc(state.query)}" placeholder="חפש אלרגנים או מצבים רפואיים..." autocomplete="off"></label>
     <div class="chips">${list.map((c) => `<button class="chip ${state.selected.has(c.slug) ? 'on' : ''}" data-pick="${esc(c.slug)}">${state.selected.has(c.slug) ? '<i class="ck">✓</i>' : ''}${esc(c.display_name_he.replace(/\s*\(.*\)$/, ''))}</button>`).join('')}</div>
-    ${n ? `<p class="note-ok">${n} מצבים נבחרו · הניתוח משלב את כולם</p>` : ''}
+    ${n ? `<p class="note-ok">${n === 1 ? 'מצב אחד נבחר' : `${n} מצבים נבחרו · הניתוח משלב את כולם`}</p>` : ''}
     ${state.error ? `<div class="alert">⚠️ <span>${esc(state.error)}</span></div>` : ''}
     <button class="cta" id="go" ${n && !state.loading ? '' : 'disabled'}>${state.loading ? 'מנתח מחקרים…' : n > 1 ? 'התחל ניתוח משולב' : 'התחל ניתוח'}</button>
     ${n ? '<button class="cta" style="background:#fff;color:var(--teal-dark);box-shadow:none;height:44px;font-size:14px" data-go="#/profile">דרגת חומרה</button>' : ''}
