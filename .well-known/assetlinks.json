@@ -1,0 +1,15 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.echlonlabs.allergynutrition",
+      "sha256_cert_fingerprints": [
+        "01:66:1D:EA:91:B4:E5:E9:FB:F7:07:D7:8E:A5:30:AE:CA:25:9B:6B:EE:FE:B0:C8:65:26:73:2E:CD:AA:F0:39",
+        "91:36:E5:3F:CD:56:8F:9B:D1:F5:32:86:EC:DB:23:E3:C3:1C:73:7A:52:7E:D8:E9:B5:5D:4B:84:62:12:11:2E"
+      ]
+    }
+  }
+]

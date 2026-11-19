@@ -14,8 +14,6 @@ if (platform === 'android') {
   const launch = androidLaunchUrl();
   $('open-app').href = launch;
   $('open-play').href = PLAY_URL;
-  // Chrome may ignore intent: navigations that do not come from a tap, so the buttons above are the reliable path.
-  setTimeout(() => { window.location.href = launch; }, 400);
 }
 
 if (platform === 'ios') {
