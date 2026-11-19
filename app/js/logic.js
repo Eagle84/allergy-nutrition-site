@@ -25,6 +25,29 @@ export function trialDaysLeft(user, now = Date.now(), trialDays = TRIAL_DAYS) {
   return left > 0 ? Math.min(left, trialDays) : null;
 }
 
+/**
+ * Two rows of bubbles, no scrolling: at most `maxItems`, each row no wider than `maxWidth`. Chosen bubbles are placed first so they never
+ * disappear; a bubble too wide for any row is skipped and a later one that fits takes its place. Rows keep list order.
+ */
+export function packTwoRows(widths, isSelected, maxWidth, gap = 8, maxItems = 6) {
+  const rows = [[], []];
+  const used = [0, 0];
+  const order = [...widths.keys()].sort((a, b) => Number(isSelected(b)) - Number(isSelected(a)) || a - b);
+  let placed = 0;
+  for (const i of order) {
+    if (placed >= maxItems) break;
+    const w = widths[i];
+    if (!(w <= maxWidth)) continue;
+    const r = [0, 1].find((k) => used[k] + (rows[k].length ? gap : 0) + w <= maxWidth);
+    if (r === undefined) continue;
+    used[r] += (rows[r].length ? gap : 0) + w;
+    rows[r].push(i);
+    placed += 1;
+  }
+  rows.forEach((row) => row.sort((a, b) => a - b));
+  return { rows, shown: rows.flat().sort((a, b) => a - b) };
+}
+
 /** Nothing selected means nothing to show: a leftover analysis stays hidden until a condition is chosen again. */
 export const visibleAnalysis = (selected, analysis) => (Array.isArray(selected) && selected.length > 0 ? analysis ?? null : null);
 

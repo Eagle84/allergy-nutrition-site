@@ -66,7 +66,7 @@ export function home(v) {
     <h2 class="t">תזונה בטוחה</h2><p class="sub">ניתוח מבוסס מחקרים לכל שילוב של אלרגיות ומצבים</p>
     ${announcementBanner(cfg(v).settings.announcement, v.dismissedAnnouncement)}${planPill(v)}
     <label class="search">🔍<input id="q" value="${esc(v.query)}" placeholder="חפש אלרגנים או מצבים רפואיים..." autocomplete="off"></label>
-    <div class="chips chips-2" data-rows="2">${chips}</div>
+    <div class="chips chips-2" data-fit="2">${chips}</div>
     ${n ? `<p class="note-ok">${n === 1 ? 'מצב אחד נבחר' : `${n} מצבים נבחרו · הניתוח משלב את כולם`}</p>` : ''}
     ${limitNote}${errorBox(v)}
     <button class="cta" id="go" ${n && !v.loading ? '' : 'disabled'}>${v.loading ? 'מנתח מחקרים…' : n > 1 ? 'התחל ניתוח משולב' : 'התחל ניתוח'}</button>

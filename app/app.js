@@ -1,7 +1,7 @@
 import { resolvePlatform, isLocalHost } from '../assets/js/router.js';
 import { authConfigured, onUser, getIdToken, signOut, reauthenticate, deleteAuthAccount } from '../assets/js/auth.js';
 import {
-  effectivePlan, trialDaysLeft, visibleAnalysis, cleanProfile, maxConditions, validateProfile, isComplete, toRequestProfile, resolveLocation,
+  effectivePlan, trialDaysLeft, visibleAnalysis, cleanProfile, packTwoRows, maxConditions, validateProfile, isComplete, toRequestProfile, resolveLocation,
   approvedProducts, addDiaryEntry, SAMPLE_DIETITIANS, DEFAULT_CITY_ID,
   resolveConfig, featureVisible, orderItems, orderListText, storeKey,
 } from './js/logic.js';
@@ -147,6 +147,33 @@ function currentHash() {
   return flag && !featureVisible(state.config, flag, state.user?.admin) ? '#/home' : h;
 }
 
+/** The home bubbles are two rows that fit, never a scroller: measure them, keep what fits (chosen ones first), hide the rest. */
+function fitConditionChips() {
+  const box = document.querySelector('.chips-2[data-fit]');
+  if (!box) return;
+  const chips = [...box.querySelectorAll('.chip')];
+  const maxWidth = box.clientWidth - 36;
+  if (!chips.length || maxWidth <= 0) return;
+  box.style.visibility = 'hidden';
+  chips.forEach((c) => { c.hidden = false; c.style.flex = 'none'; c.style.width = 'max-content'; });
+  const widths = chips.map((c) => Math.ceil(c.getBoundingClientRect().width));
+  const { rows } = packTwoRows(widths, (i) => chips[i].classList.contains('on'), maxWidth, 8, 6);
+  const placed = new Set(rows.flat());
+  const spare = document.createElement('div');
+  spare.hidden = true;
+  spare.append(...chips.filter((_, i) => !placed.has(i)));
+  box.replaceChildren(...rows.filter((r) => r.length).map((r) => {
+    const row = document.createElement('div');
+    row.className = 'chip-row';
+    row.append(...r.map((i) => chips[i]));
+    return row;
+  }), spare);
+  box.style.visibility = '';
+}
+
+let fitTimer = 0;
+window.addEventListener('resize', () => { clearTimeout(fitTimer); fitTimer = setTimeout(() => { try { fitConditionChips(); } catch { /* keep the current layout */ } }, 150); });
+
 function render() {
   if (!state.ready) return;
   const hash = currentHash();
@@ -159,6 +186,7 @@ function render() {
   const active = document.activeElement;
   const focus = active?.id && $('#root').contains(active) ? { id: active.id, start: active.selectionStart, end: active.selectionEnd } : null;
   $('#root').innerHTML = html;
+  try { fitConditionChips(); } catch { document.querySelector('.chips-2')?.style.removeProperty('visibility'); }
   $('#nav').classList.toggle('hidden', hash === '#/onboarding');
   $('#nav').innerHTML = NAV.map(([h, ic]) => `<a href="${h}" class="${hash === h ? 'on' : ''}">${ic}</a>`).join('');
   if (focus) {
