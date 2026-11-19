@@ -45,6 +45,19 @@ const inRange = (v, lo, hi) => Number.isInteger(v) && v >= lo && v <= hi;
 const set = (v) => v != null && v !== '';
 
 /** Names of the fields that are out of range; empty means valid. */
+/** A profile read back from storage is only ever used as plain values: numbers must be numbers, texts must be short strings. */
+export function cleanProfile(p, empty) {
+  const src = p && typeof p === 'object' && !Array.isArray(p) ? p : {};
+  const out = { ...empty };
+  for (const [k, d] of Object.entries(empty)) {
+    const v = src[k];
+    if (typeof d === 'boolean') out[k] = typeof v === 'boolean' ? v : d;
+    else if (d === null) out[k] = Number.isFinite(v) ? v : null;
+    else out[k] = typeof v === 'string' ? v.slice(0, 200) : d;
+  }
+  return out;
+}
+
 export function validateProfile(p, currentYear = new Date().getFullYear()) {
   const bad = [];
   if ((p.name ?? '').length > 60) bad.push('name');
@@ -121,30 +134,57 @@ export function approvedProducts(analysis, query = '') {
 
 // ---- diary: does this meal suit the user? -----------------------------------------------------------------------------
 const PREFIXES = ['', 'ה', 'ו', 'ב', 'ל', 'כ', 'ש', 'מ', 'וה', 'שה', 'בה', 'לה', 'וב', 'ול'];
+const FINALS = { 'ך': 'כ', 'ם': 'מ', 'ן': 'נ', 'ף': 'פ', 'ץ': 'צ' };
+const FILLER = new Set(['עם', 'של', 'על', 'או', 'גם', 'את', 'אל', 'מן', 'ללא', 'בלי', 'לא', 'יש', 'כמו', 'עוד', 'קצת', 'הרבה', 'אכלתי', 'שתיתי', 'אכלנו', 'ארוחת', 'ארוחה', 'בוקר', 'צהריים', 'ערב']);
 const words = (text) => String(text ?? '').toLowerCase().replace(/[\u0591-\u05C7]/g, '').split(/[^\p{L}\p{N}]+/u).filter(Boolean);
+/** Final letters unified and a plural ending dropped, so בוטן and בוטנים, אורז and אורזים are the same food. */
+const stem = (w) => {
+  let s = w.replace(/[ךםןףץ]/g, (c) => FINALS[c]);
+  if (s.length > 4 && (s.endsWith('ימ') || s.endsWith('ות'))) s = s.slice(0, -2);
+  return s;
+};
 /** "שום ובצל" or "תפוחים, אגסים" is a list of foods; each part is matched on its own. */
 const foodParts = (name) => String(name ?? '').split(/[,/;]|\s+ו(?=\S)/).map(words).filter((w) => w.length);
-const mentions = (set, tokens) => tokens.every((t) => PREFIXES.some((p) => set.has(p + t)));
-const matchesFood = (set, name) => foodParts(name).some((tokens) => mentions(set, tokens));
 
 /**
- * Judges a diary meal against the analysis the user already has, on the device. Whole words only (with Hebrew one-letter
- * prefixes); foods the analysis does not mention are 'unknown' rather than guessed.
+ * Judges a diary meal against the analysis the user already has, on the device. A food counts as eaten when all its words
+ * appear (Hebrew one-letter prefixes and plurals allowed). For forbidden foods with several words, one word is enough to warn
+ * ("חלב" for "חלב פרה"): a false warning is safe, a false all-clear is not. Words the analysis does not cover are reported as
+ * unchecked, and a meal is only "good" when every food word in it was recognised.
  */
 export function assessMeal(meal, analysis) {
+  const empty = (fit) => ({ fit, good: [], avoid: [], hidden: [], unchecked: [] });
   const matrix = analysis?.food_matrix;
-  if (!matrix) return { fit: 'no_analysis', good: [], avoid: [], hidden: [] };
-  const set = new Set(words(meal));
-  if (!set.size) return { fit: 'unknown', good: [], avoid: [], hidden: [] };
-  const good = (matrix.allowed_foods ?? []).filter((f) => matchesFood(set, f.name_he));
-  const avoid = (matrix.forbidden_foods ?? []).filter((f) => matchesFood(set, f.name_he));
-  const hidden = (matrix.hidden_conflict_alerts ?? []).filter((a) => matchesFood(set, a.item_he));
+  if (!matrix) return empty('no_analysis');
+  const raw = words(meal);
+  if (!raw.length) return empty('unknown');
+  const byStem = new Map(raw.map((w) => [stem(w), w]));
+  const consumed = new Set();
+  const find = (token) => {
+    const t = stem(token);
+    return PREFIXES.map((p) => p + t).find((c) => byStem.has(c));
+  };
+  const match = (name, allowPartial) => {
+    let best = null;
+    for (const tokens of foodParts(name)) {
+      const found = tokens.map(find);
+      if (found.every(Boolean)) { found.forEach((c) => consumed.add(c)); return 'full'; }
+      if (allowPartial && tokens.length > 1) {
+        const i = tokens.findIndex((t, k) => found[k] && stem(t).length >= 3);
+        if (i >= 0) { consumed.add(found[i]); best = 'partial'; }
+      }
+    }
+    return best;
+  };
+  const good = (matrix.allowed_foods ?? []).filter((f) => match(f.name_he, false));
+  const avoid = (matrix.forbidden_foods ?? []).map((f) => ({ f, m: match(f.name_he, true) })).filter((x) => x.m).map((x) => ({ ...x.f, partial: x.m === 'partial' }));
+  const hidden = (matrix.hidden_conflict_alerts ?? []).filter((a) => match(a.item_he, true));
+  const unchecked = [...byStem].filter(([s, w]) => !consumed.has(s) && !FILLER.has(w) && w.length > 1).map(([, w]) => w);
   let fit;
   if (!good.length && !avoid.length && !hidden.length) fit = 'unknown';
-  else if (!avoid.length && !hidden.length) fit = 'good';
-  else if (!good.length) fit = 'avoid';
-  else fit = 'mixed';
-  return { fit, good, avoid, hidden };
+  else if (avoid.length || hidden.length) fit = good.length ? 'mixed' : 'avoid';
+  else fit = unchecked.length ? 'partial' : 'good';
+  return { fit, good, avoid, hidden, unchecked };
 }
 
 export const shekel = (n) => `₪${Number(n).toFixed(2)}`;

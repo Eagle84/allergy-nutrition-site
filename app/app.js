@@ -1,7 +1,7 @@
 import { resolvePlatform, isLocalHost } from '../assets/js/router.js';
 import { authConfigured, onUser, getIdToken, signOut } from '../assets/js/auth.js';
 import {
-  effectivePlan, trialDaysLeft, visibleAnalysis, maxConditions, validateProfile, isComplete, toRequestProfile, resolveLocation,
+  effectivePlan, trialDaysLeft, visibleAnalysis, cleanProfile, maxConditions, validateProfile, isComplete, toRequestProfile, resolveLocation,
   approvedProducts, addDiaryEntry, SAMPLE_DIETITIANS, DEFAULT_CITY_ID,
   resolveConfig, featureVisible, orderItems, orderListText, storeKey,
 } from './js/logic.js';
@@ -140,7 +140,7 @@ const mustOnboard = () => !state.profile.onboarded || !isComplete(state.profile,
 const ROUTE_FLAGS = { '#/plan': 'feature.meal_plan', '#/diary': 'feature.diary', '#/dietitians': 'feature.dietitians', '#/booklet': 'feature.booklet', '#/products': 'feature.approved_products' };
 
 function currentHash() {
-  const h = decodeURIComponent(location.hash || '#/home');
+  const h = (() => { try { return decodeURIComponent(location.hash || '#/home'); } catch { return '#/home'; } })();
   if (mustOnboard()) return '#/onboarding';
   if (h === '#/onboarding') return '#/home';
   const flag = ROUTE_FLAGS[h];
@@ -243,7 +243,7 @@ document.addEventListener('click', (e) => {
     if (!state.errors.length) { saveProfile(); location.hash = '#/home'; }
     render(); return;
   }
-  if (t.id === 'sign-out') { signOut().finally(() => location.replace('../')); }
+  if (t.id === 'sign-out') { state.saved?.clear(); signOut().finally(() => location.replace('../')); }
 });
 
 function orderContext() {
@@ -307,7 +307,7 @@ async function start(user) {
   state.saved = createStore(window.localStorage).forUser(user.uid);
   state.api = DEMO ? demoApi : createApi({ getToken: getIdToken });
   const p = state.saved.get('profile', null);
-  state.profile = { ...EMPTY_PROFILE, ...(p && typeof p === 'object' ? p : {}) };
+  state.profile = cleanProfile(p, EMPTY_PROFILE);
   const loc = state.saved.get('location', null);
   if (loc && typeof loc === 'object') state.location = { autoDetect: loc.autoDetect !== false, cityId: typeof loc.cityId === 'string' ? loc.cityId : DEFAULT_CITY_ID };
   state.selected = state.saved.get('selected', []).filter((s) => typeof s === 'string');

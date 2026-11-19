@@ -243,16 +243,19 @@ const FIT_HEADLINE = {
   no_analysis: 'בחרו מצבים ובצעו ניתוח כדי לראות אם זה מתאים לכם.',
   unknown: 'אין מידע על המזון הזה בניתוח שלכם, ולכן אין המלצה.',
   good: '✅ מתאים למצבים שבחרתם',
+  partial: '✅ מה שזוהה מתאים, אך לא כל המרכיבים נבדקו',
   mixed: '⚖️ חלק מתאים וחלק כדאי להימנע ממנו',
   avoid: '⛔ כדאי להימנע, לפי המצבים שבחרתם',
 };
 
 export function mealVerdict(meal, analysis) {
   const r = assessMeal(meal, analysis);
+  const note = (x) => (x.partial ? '<div class="sub" style="margin:0">ייתכן שהכוונה למזון הזה, כדאי לוודא.</div>' : '');
   return `<div class="verdict" data-verdict="${r.fit}"><b>${esc(FIT_HEADLINE[r.fit])}</b>
-    ${r.avoid.map((a) => `<div><b>⛔ ${esc(a.name_he)} · ${esc(a.warning_badge_he)}</b><div class="sub" style="margin:0">${esc(a.scientific_rationale_he)}</div>${a.safe_substitute_he ? `<div class="sub" style="margin:0">במקום זה: ${esc(a.safe_substitute_he)}</div>` : ''}</div>`).join('')}
+    ${r.avoid.map((a) => `<div><b>⛔ ${esc(a.name_he)} · ${esc(a.warning_badge_he)}</b>${note(a)}<div class="sub" style="margin:0">${esc(a.scientific_rationale_he)}</div>${a.safe_substitute_he ? `<div class="sub" style="margin:0">במקום זה: ${esc(a.safe_substitute_he)}</div>` : ''}</div>`).join('')}
     ${r.hidden.map((h) => `<div><b>⚠️ ${esc(h.title_he)}</b><div class="sub" style="margin:0">${esc(h.explanation_he)}</div></div>`).join('')}
     ${r.good.map((g) => `<div><b>✅ ${esc(g.name_he)} · ${esc(g.benefit_badge_he)}</b><div class="sub" style="margin:0">${esc(g.scientific_rationale_he)}</div></div>`).join('')}
+    ${r.unchecked.length && r.fit !== 'unknown' && r.fit !== 'no_analysis' ? `<div class="sub" style="margin:0">לא נבדקו: ${esc(r.unchecked.join(', '))}</div>` : ''}
     ${r.fit === 'no_analysis' ? '' : '<small class="sub" style="margin:0">ההתאמה מבוססת על הניתוח שלכם ואינה ייעוץ רפואי.</small>'}</div>`;
 }
 
@@ -279,7 +282,7 @@ const L = {
   pregnancy: { none: 'לא רלוונטי', pregnant: 'הריון', breastfeeding: 'הנקה' },
 };
 const seg = (attr, values, labels, current) => `<div class="seg">${values.map((x) => `<button class="${current === x ? 'on' : ''}" ${attr}="${x}">${esc(labels[x])}</button>`).join('')}</div>`;
-const num = (id, label, value, min, max, unit = '') => `<label class="lab" for="${id}">${label}</label><input class="inp" id="${id}" inputmode="numeric" type="number" min="${min}" max="${max}" value="${value ?? ''}" ${unit ? `placeholder="${unit}"` : ''}>`;
+const num = (id, label, value, min, max, unit = '') => `<label class="lab" for="${id}">${label}</label><input class="inp" id="${id}" inputmode="numeric" type="number" min="${min}" max="${max}" value="${esc(String(value ?? ''))}" ${unit ? `placeholder="${unit}"` : ''}>`;
 
 export const ONBOARDING_STEPS = 4;
 
