@@ -11,16 +11,16 @@ const MAX_CONDITIONS = { free: 1, basic: 3, pro: 8, premium: 8 };
 const FEATURE_MIN_PLAN = { meal_plan: 'basic', booklet: 'basic', price_compare: 'basic', dietitian_identity: 'premium' };
 
 /** Admins always have everything; a new account gets 7 days of Pro, counted from its first sign-in; then Free. */
-export function effectivePlan(user, now = Date.now()) {
+export function effectivePlan(user, now = Date.now(), trialDays = TRIAL_DAYS) {
   if (user?.admin) return 'premium';
   if (user?.createdAtMs == null) return 'free';
-  return now - user.createdAtMs < TRIAL_DAYS * DAY ? 'pro' : 'free';
+  return now - user.createdAtMs < trialDays * DAY ? 'pro' : 'free';
 }
 
-export function trialDaysLeft(user, now = Date.now()) {
+export function trialDaysLeft(user, now = Date.now(), trialDays = TRIAL_DAYS) {
   if (!user || user.admin || user.createdAtMs == null) return null;
-  const left = Math.ceil((TRIAL_DAYS * DAY - (now - user.createdAtMs)) / DAY);
-  return left > 0 ? Math.min(left, TRIAL_DAYS) : null;
+  const left = Math.ceil((trialDays * DAY - (now - user.createdAtMs)) / DAY);
+  return left > 0 ? Math.min(left, trialDays) : null;
 }
 
 export const maxConditions = (plan) => MAX_CONDITIONS[plan] ?? 1;
@@ -224,3 +224,60 @@ export function addDiaryEntry(list, input, now = Date.now()) {
   while (taken.has(entry.id)) entry.id += 1;
   return [entry, ...list].slice(0, DIARY_LIMIT);
 }
+
+// ---- remote config (flags + settings) ------------------------------------------------------------------------------
+export const FLAG_DEFAULTS = {
+  'feature.analysis': true, 'feature.meal_plan': true, 'feature.booklet': true, 'feature.price_compare': true, 'feature.approved_products': true,
+  'feature.dietitians': true, 'feature.diary': true, 'feature.online_order': false,
+  'mock.dietitians': true, 'mock.products': true, 'mock.markets': true, maintenance: false,
+};
+export const SETTING_DEFAULTS = { announcement: '', maintenance_message: '', min_android_version_code: 0, free_weekly_analyses: 2, trial_days: 7 };
+const INT_RANGES = { min_android_version_code: [0, 10_000_000], free_weekly_analyses: [0, 1000], trial_days: [0, 365] };
+const MAX_CONFIG_TEXT = 300;
+
+/** Validates the server's answer; every bad or missing value falls back to the safe default. Never throws. */
+export function resolveConfig(raw) {
+  const obj = raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : {};
+  const flagsIn = obj.flags && typeof obj.flags === 'object' && !Array.isArray(obj.flags) ? obj.flags : {};
+  const setIn = obj.settings && typeof obj.settings === 'object' && !Array.isArray(obj.settings) ? obj.settings : {};
+  const flags = {};
+  for (const [k, d] of Object.entries(FLAG_DEFAULTS)) flags[k] = typeof flagsIn[k] === 'boolean' ? flagsIn[k] : d;
+  const settings = {};
+  for (const [k, d] of Object.entries(SETTING_DEFAULTS)) {
+    const v = setIn[k];
+    if (k in INT_RANGES) settings[k] = Number.isInteger(v) && v >= INT_RANGES[k][0] && v <= INT_RANGES[k][1] ? v : d;
+    else settings[k] = typeof v === 'string' ? v.slice(0, MAX_CONFIG_TEXT) : d;
+  }
+  return { flags, settings };
+}
+
+/** Admins always see everything so the owner can test; everyone else follows the flag. */
+export const featureVisible = (config, flag, isAdmin) => Boolean(isAdmin) || config.flags[flag] === true;
+
+// ---- online order --------------------------------------------------------------------------------------------------
+export const ORDER_NOTE = 'החנות אינה מאפשרת הוספה אוטומטית לעגלה; הרשימה נשמרת כאן ואפשר לפתוח כל מוצר בחנות';
+
+/** The store's own search page for one product, or null when the template is missing or not http(s). */
+export function buildSearchUrl(template, product) {
+  if (typeof template !== 'string' || !template.includes('{q}')) return null;
+  const url = safeHttpUrl(template.replace('{q}', encodeURIComponent(String(product).trim())));
+  return url === '#' ? null : url;
+}
+
+/** One entry per product, in the store's order. */
+export function orderItems(market) {
+  const seen = new Set();
+  const items = [];
+  for (const p of market?.prices ?? []) {
+    const product = String(p.product).trim();
+    if (!product || seen.has(product)) continue;
+    seen.add(product);
+    items.push({ product, price: Number(p.price) });
+  }
+  return items;
+}
+
+export const storeKey = (market) => `${market.chain}|${market.store_name}`;
+export const checkedItems = (items, unchecked) => items.filter((i) => !unchecked.includes(i.product));
+export const checkedTotal = (items, unchecked) => checkedItems(items, unchecked).reduce((s, i) => s + i.price, 0);
+export const orderListText = (storeName, items, unchecked) => [`רשימת קניות · ${storeName}`, ...checkedItems(items, unchecked).map((i) => `• ${i.product}`)].join('\n');

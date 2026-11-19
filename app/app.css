@@ -116,3 +116,5 @@ textarea.inp{resize:vertical}
 .symp{color:var(--warn-text);font-size:13px}
 .spinner{width:26px;height:26px;border-radius:50%;border:3px solid var(--chip);border-top-color:var(--teal);animation:spin 1s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
+
+.orow{display:flex;align-items:center;justify-content:space-between;gap:8px;border-top:1px solid var(--line);padding:8px 0}.orow .check{flex:1}.total{font-weight:900;color:var(--teal-dark);font-size:16px}

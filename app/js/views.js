@@ -5,7 +5,13 @@ import {
   SEX_VALUES, ACTIVITY_VALUES, GOAL_VALUES, DIET_VALUES, PREGNANCY_VALUES,
   approvedProducts, shekel, safeHttpUrl, isComplete, validateProfile,
   anonymousLabel, starsText, averageRating, ratingLabel, reviewsSummary, dietitiansFor,
+  resolveConfig, featureVisible, orderItems, checkedTotal, buildSearchUrl, ORDER_NOTE, storeKey,
 } from './logic.js';
+
+const DEFAULT_CONFIG = resolveConfig(null);
+const cfg = (v) => v.config ?? DEFAULT_CONFIG;
+const visible = (v, flag) => featureVisible(cfg(v), flag, v.user?.admin);
+const ROUTE_FLAGS = { '#/plan': 'feature.meal_plan', '#/diary': 'feature.diary', '#/dietitians': 'feature.dietitians', '#/booklet': 'feature.booklet', '#/products': 'feature.approved_products' };
 
 export const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
@@ -56,14 +62,14 @@ export function home(v) {
   return `<div class="screen">
     <div class="top"><button class="icon-btn" data-go="#/settings" aria-label="הגדרות">⚙️</button><span></span></div>
     <h2 class="t">תזונה בטוחה</h2><p class="sub">ניתוח מבוסס מחקרים לכל שילוב של אלרגיות ומצבים</p>
-    ${planPill(v)}
+    ${announcementBanner(cfg(v).settings.announcement, v.dismissedAnnouncement)}${planPill(v)}
     <label class="search">🔍<input id="q" value="${esc(v.query)}" placeholder="חפש אלרגנים או מצבים רפואיים..." autocomplete="off"></label>
     <div class="chips">${chips}</div>
     ${n ? `<p class="note-ok">${n === 1 ? 'מצב אחד נבחר' : `${n} מצבים נבחרו · הניתוח משלב את כולם`}</p>` : ''}
     ${limitNote}${errorBox(v)}
     <button class="cta" id="go" ${n && !v.loading ? '' : 'disabled'}>${v.loading ? 'מנתח מחקרים…' : n > 1 ? 'התחל ניתוח משולב' : 'התחל ניתוח'}</button>
     ${n ? '<button class="cta ghost" data-go="#/severity">דרגת חומרה</button>' : ''}
-    <div class="grid">${tiles.map(([ic, t, s, go]) => `<button class="tile" data-go="${go}"><div class="ic">${ic}</div><b>${t}</b><small>${s}</small></button>`).join('')}</div>
+    <div class="grid">${tiles.filter(([, , , go]) => !ROUTE_FLAGS[go] || visible(v, ROUTE_FLAGS[go])).map(([ic, t, s, go]) => `<button class="tile" data-go="${go}"><div class="ic">${ic}</div><b>${t}</b><small>${s}</small></button>`).join('')}</div>
     ${disclaimer(v)}</div>`;
 }
 
@@ -160,6 +166,8 @@ export function booklet(v) {
 }
 
 // ---- approved products + markets -----------------------------------------------------------------------------------
+const orderEnabled = (v, market) => cfg(v).flags['feature.online_order'] === true && allows(v.plan, FEATURES.PRICE_COMPARE) && safeHttpUrl(market?.online_store_url) !== '#';
+
 function marketsBlock(v) {
   const m = v.markets;
   const place = `<div class="sub" style="margin:0">מיקום: ${esc(v.resolved.label)} · <a href="#/settings" style="color:var(--teal-dark)">שינוי</a></div>`;
@@ -172,7 +180,8 @@ function marketsBlock(v) {
       <div class="mh"><span class="rank">${i + 1}</span><div><b>${esc(x.chain)} · ${esc(x.store_name)}</b><small>${esc([x.address, x.city].filter(Boolean).join(', '))}</small></div><span class="km">${esc(x.distance_km.toFixed(1))} ק״מ</span></div>
       <div class="total">${esc(shekel(x.basket_total))}<small> · ${esc(x.items_found)} מתוך ${esc(x.items_requested)} מוצרים</small></div>
       ${x.prices.map((p) => `<div class="pr"><span>${esc(p.product)}</span><b>${esc(shekel(p.price))}</b></div>`).join('')}
-      ${x.missing.length ? `<small class="sub" style="margin:0">לא נמצא: ${esc(x.missing.join(', '))}</small>` : ''}</div>`).join('')
+      ${x.missing.length ? `<small class="sub" style="margin:0">לא נמצא: ${esc(x.missing.join(', '))}</small>` : ''}
+      ${orderEnabled(v, x) ? `<button class="swap" data-order="${i}">🛒 הזמנה אונליין</button>` : ''}</div>`).join('')
       + `<p class="disc">${esc(m.data.source)}${m.data.as_of ? ` · עודכן ${esc(m.data.as_of)}` : ''}<br>${esc(m.data.disclaimer)}</p>`;
   }
   return `<div class="card" style="margin:0 18px;padding:12px;display:flex;flex-direction:column;gap:8px"><b>🛒 השוואת מחירים · 3 הסופרים המובילים</b>${place}
@@ -184,7 +193,7 @@ export function products(v) {
   const items = approvedProducts(v.analysis, v.query);
   const byCat = new Map();
   for (const f of items) { if (!byCat.has(f.category_he)) byCat.set(f.category_he, []); byCat.get(f.category_he).push(f); }
-  const prices = allows(v.plan, FEATURES.PRICE_COMPARE) ? marketsBlock(v) : planGate('השוואת מחירי סופרים');
+  const prices = !visible(v, 'feature.price_compare') ? '' : allows(v.plan, FEATURES.PRICE_COMPARE) ? marketsBlock(v) : planGate('השוואת מחירי סופרים');
   return `<div class="screen">${topBar()}<h2 class="t">מוצרים מאושרים</h2><p class="sub">מזונות שנבדקו מול המחקרים עבור הפרופיל שלכם</p>
     <label class="search">🔍<input id="q" value="${esc(v.query)}" placeholder="חפש מוצר..." autocomplete="off"></label>
     ${prices}
@@ -197,7 +206,8 @@ const mapsUrl = (d) => `https://www.google.com/maps/search/?api=1&query=${encode
 const telHref = (phone) => `tel:${String(phone).replace(/[^\d+-]/g, '')}`;
 
 export function dietitians(v, all) {
-  const list = dietitiansFor(all, v.selected);
+  const directory = cfg(v).flags['mock.dietitians'] ? all : [];
+  const list = dietitiansFor(directory, v.selected);
   const identity = allows(v.plan, FEATURES.DIETITIAN_IDENTITY);
   const cards = list.map((d, i) => {
     const stars = `<span class="stars">${starsText(averageRating(d.reviews))}</span> <small>${esc(ratingLabel(d.reviews))}</small>`;
@@ -208,7 +218,7 @@ export function dietitians(v, all) {
   }).join('');
   return `<div class="screen">${topBar()}<h2 class="t">מצא דיאטן/ית</h2><p class="sub">מותאם למצבים שבחרתם · רשימה לדוגמה עד להצטרפות אנשי מקצוע</p>
     ${identity ? '' : `<div class="alert">🔒 <span>שם ופרטי הקשר נחשפים בתוכנית פרימיום.</span><button class="swap" data-go="#/plans">שדרגו</button></div>`}
-    <div style="display:flex;flex-direction:column;gap:10px;padding:0 18px">${cards}</div></div>`;
+    <div style="display:flex;flex-direction:column;gap:10px;padding:0 18px">${directory.length ? cards : '<p class="sub">אין אנשי מקצוע זמינים כרגע</p>'}</div></div>`;
 }
 
 export function dietitianDetail(v, d) {
@@ -345,4 +355,32 @@ export function settings(v) {
 
     <button class="cta ghost" id="sign-out">התנתקות</button>
     <p class="disc">${esc(DISCLAIMER)}<br><a href="../privacy/" style="color:var(--teal-dark)">מדיניות פרטיות</a></p></div>`;
+}
+
+// ---- announcement, notices, online order -----------------------------------------------------------------------------
+export function announcementBanner(text, dismissed = '') {
+  if (!text || text === dismissed) return '';
+  return `<div class="pillrow" style="display:flex;gap:8px;align-items:center;justify-content:space-between"><span>${esc(text)}</span><button data-dismiss-announcement aria-label="סגירה" style="padding:2px 8px">✕</button></div>`;
+}
+
+export const noticeView = (title, message, action = 'נסו שוב') => `<div class="center"><div style="font-size:54px">🛠️</div><b>${esc(title)}</b><span class="sub">${esc(message)}</span><button class="cta" style="width:220px" data-retry>${esc(action)}</button></div>`;
+
+/** The shopper's list for one store. Everything starts checked; unchecking is remembered per store by the app. */
+export function orderView(v) {
+  const market = v.markets?.data?.markets?.[v.orderIndex ?? -1];
+  if (!market || !orderEnabled(v, market)) return `<div class="screen">${topBar('#/products')}<p class="sub">הרשימה אינה זמינה כרגע.</p></div>`;
+  const items = orderItems(market);
+  const unchecked = v.orderUnchecked ?? [];
+  const storeUrl = safeHttpUrl(market.online_store_url);
+  const rows = items.map((item, i) => {
+    const search = buildSearchUrl(market.online_search_url, item.product);
+    return `<div class="orow"><label class="check"><input type="checkbox" data-ocheck="${i}" ${unchecked.includes(item.product) ? '' : 'checked'}> <span>${esc(item.product)}</span></label>
+      <b>${esc(shekel(item.price))}</b>${search ? `<a class="pill-a" href="${esc(search)}" target="_blank" rel="noopener noreferrer">חפש בחנות</a>` : ''}</div>`;
+  }).join('');
+  return `<div class="screen">${topBar('#/products')}<h2 class="t">הזמנה אונליין · ${esc(market.chain)}</h2><p class="sub">${esc(market.store_name)}</p>
+    <div class="alert">ℹ️ <span>${esc(ORDER_NOTE)}</span></div>
+    <div class="card form"><div class="actions"><button class="swap" data-oall>בחר הכול</button><button class="swap" data-onone>נקה הכול</button></div>${rows}
+      <div class="total">סה״כ לפי הסימון: ${esc(shekel(checkedTotal(items, unchecked)))}</div>
+      ${storeUrl !== '#' ? `<a class="cta" style="display:grid;place-items:center;text-decoration:none;margin:0" href="${esc(storeUrl)}" target="_blank" rel="noopener noreferrer">פתח את החנות</a>` : ''}
+      <div class="actions"><button class="swap" data-ocopy>העתק רשימה</button><button class="swap" data-oshare>שתף רשימה</button></div></div></div>`;
 }

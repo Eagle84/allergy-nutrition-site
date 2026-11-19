@@ -3,6 +3,7 @@ import { authConfigured, onUser, getIdToken, signOut } from '../assets/js/auth.j
 import {
   effectivePlan, trialDaysLeft, maxConditions, validateProfile, isComplete, toRequestProfile, resolveLocation,
   approvedProducts, addDiaryEntry, SAMPLE_DIETITIANS, DEFAULT_CITY_ID,
+  resolveConfig, featureVisible, orderItems, orderListText, storeKey,
 } from './js/logic.js';
 import { createStore } from './js/store.js';
 import { createApi, ApiError } from './js/api.js';
@@ -27,21 +28,24 @@ const state = {
   swaps: {}, profile: { ...EMPTY_PROFILE }, location: { autoDetect: true, cityId: DEFAULT_CITY_ID }, fix: null,
   markets: { status: 'idle', data: null, error: '' }, diary: [], diaryForm: { meal: '', symptoms: [], severity: 1, note: '' },
   step: 0, errors: [], year: new Date().getFullYear(),
+  config: resolveConfig(null), dismissedAnnouncement: '', orderIndex: null, orderUnchecked: [],
 };
 
 const now = () => Date.now();
-const plan = () => effectivePlan(state.user, now());
+const plan = () => effectivePlan(state.user, now(), state.config.settings.trial_days);
 const viewModel = () => ({
-  ...state, plan: plan(), trialLeft: trialDaysLeft(state.user, now()), resolved: resolveLocation(state.location, state.fix),
+  ...state, plan: plan(), trialLeft: trialDaysLeft(state.user, now(), state.config.settings.trial_days), resolved: resolveLocation(state.location, state.fix),
 });
 
 // ---- data ------------------------------------------------------------------------------------------------------
 const demoApi = {
   conditions: async () => (await fetch('conditions.json')).json(),
+  config: async () => ({ flags: { 'feature.online_order': true }, settings: {} }),
   analyze: async () => (await fetch('sample-analysis.json')).json(),
   marketsTop: async () => ({
     available: true, source: 'נתוני דוגמה', as_of: null, location: { lat: 32.08, lng: 34.78, label: null }, disclaimer: 'נתוני דוגמה בלבד.',
-    markets: [1, 2, 3].map((n) => ({ chain: 'רשת לדוגמה', store_name: `סניף ${n}`, address: 'רחוב הדוגמה', city: 'תל אביב', distance_km: n * 1.2, basket_total: 40 + n, effective_cost: 42 + n, items_found: 2, items_requested: 2, missing: [], prices: [{ food: 'אורז', product: 'אורז לדוגמה', price: 9.9 }] })),
+    markets: [1, 2, 3].map((n) => ({ chain: 'רשת לדוגמה', store_name: `סניף ${n}`, address: 'רחוב הדוגמה', city: 'תל אביב', distance_km: n * 1.2, basket_total: 40 + n, effective_cost: 42 + n, items_found: 2, items_requested: 2, missing: [], prices: [{ food: 'אורז', product: 'אורז לדוגמה', price: 9.9 }, { food: 'חלב', product: 'חלב לדוגמה', price: 6.5 }],
+      online_store_url: 'https://www.shufersal.co.il/online/he/A', online_search_url: 'https://www.shufersal.co.il/online/he/search?text={q}' })),
   }),
 };
 
@@ -49,6 +53,15 @@ const messageFor = (e) => (e instanceof ApiError ? e.message : 'אירעה שג�
 
 async function loadConditions() {
   try { return await state.api.conditions(); } catch { return (await fetch('conditions.json')).json(); }
+}
+
+async function refreshConfig() {
+  try {
+    const raw = await state.api.config();
+    state.config = resolveConfig(raw);
+    state.saved.set('config', raw);
+  } catch { /* keep the cached or default configuration */ }
+  render();
 }
 
 async function analyze() {
@@ -118,16 +131,20 @@ function readProfileInputs() {
 // ---- router ----------------------------------------------------------------------------------------------------
 const screens = {
   '#/home': V.home, '#/severity': V.severity, '#/analysis': V.analysisView, '#/matrix': V.matrix, '#/plan': V.mealPlan,
-  '#/booklet': V.booklet, '#/diary': V.diary, '#/products': V.products, '#/plans': V.plans, '#/settings': V.settings, '#/onboarding': V.onboarding,
+  '#/booklet': V.booklet, '#/order': V.orderView, '#/diary': V.diary, '#/products': V.products, '#/plans': V.plans, '#/settings': V.settings, '#/onboarding': V.onboarding,
 };
 const NAV = [['#/home', '🏠'], ['#/analysis', '📊'], ['#/matrix', '🔎'], ['#/plan', '🍽️'], ['#/settings', '⚙️']];
 
 const mustOnboard = () => !state.profile.onboarded || !isComplete(state.profile, state.year);
 
+const ROUTE_FLAGS = { '#/plan': 'feature.meal_plan', '#/diary': 'feature.diary', '#/dietitians': 'feature.dietitians', '#/booklet': 'feature.booklet', '#/products': 'feature.approved_products' };
+
 function currentHash() {
   const h = decodeURIComponent(location.hash || '#/home');
   if (mustOnboard()) return '#/onboarding';
-  return h === '#/onboarding' ? '#/home' : h;
+  if (h === '#/onboarding') return '#/home';
+  const flag = ROUTE_FLAGS[h];
+  return flag && !featureVisible(state.config, flag, state.user?.admin) ? '#/home' : h;
 }
 
 function render() {
@@ -135,7 +152,8 @@ function render() {
   const hash = currentHash();
   const v = viewModel();
   let html;
-  if (hash === '#/dietitians') html = V.dietitians(v, SAMPLE_DIETITIANS);
+  if (state.config.flags.maintenance && !state.user?.admin) html = V.noticeView('בתחזוקה', state.config.settings.maintenance_message || 'השירות בתחזוקה. נחזור בקרוב.');
+  else if (hash === '#/dietitians') html = V.dietitians(v, SAMPLE_DIETITIANS);
   else if (hash.startsWith('#/dietitian/')) html = V.dietitianDetail(v, dietitianById(hash.slice(12)));
   else html = (screens[hash] ?? V.home)(v);
   const active = document.activeElement;
@@ -179,6 +197,16 @@ document.addEventListener('click', (e) => {
     const i = Number(d.swap); const m = state.analysis.personalized_diet_plan.meals[i]; const cur = state.swaps[i] ?? m.dish_name_he;
     state.swaps[i] = m.swap_options_he[(m.swap_options_he.indexOf(cur) + 1) % m.swap_options_he.length] ?? m.swap_options_he[0]; render(); return;
   }
+  if (d.order !== undefined) {
+    state.orderIndex = Number(d.order);
+    const market = state.markets.data?.markets?.[state.orderIndex];
+    state.orderUnchecked = market ? state.saved.get(`order:${storeKey(market)}`, []).filter((x) => typeof x === 'string') : [];
+    location.hash = '#/order'; return;
+  }
+  if (d.ocheck !== undefined || 'oall' in d || 'onone' in d) { toggleOrder(d); return; }
+  if ('ocopy' in d || 'oshare' in d) { shareOrder('oshare' in d); return; }
+  if ('dismissAnnouncement' in d) { state.dismissedAnnouncement = state.config.settings.announcement; state.saved.set('dismissedAnnouncement', state.dismissedAnnouncement); render(); return; }
+  if ('retry' in d) { refreshConfig(); return; }
   if (d.dietitian) { location.hash = `#/dietitian/${encodeURIComponent(d.dietitian)}`; return; }
   if (d.symptom) { state.diaryForm.symptoms = pick(state.diaryForm.symptoms, d.symptom); readDiaryInputs(); render(); return; }
   if (d.dsev) { state.diaryForm.severity = Number(d.dsev); readDiaryInputs(); render(); return; }
@@ -217,6 +245,35 @@ document.addEventListener('click', (e) => {
   if (t.id === 'sign-out') { signOut().finally(() => location.replace('../')); }
 });
 
+function orderContext() {
+  const market = state.markets.data?.markets?.[state.orderIndex ?? -1];
+  return market ? { market, items: orderItems(market) } : null;
+}
+
+function toggleOrder(d) {
+  const ctx = orderContext();
+  if (!ctx) return;
+  if (d.ocheck !== undefined) {
+    const product = ctx.items[Number(d.ocheck)]?.product;
+    if (product === undefined) return;
+    state.orderUnchecked = state.orderUnchecked.includes(product) ? state.orderUnchecked.filter((x) => x !== product) : [...state.orderUnchecked, product];
+  } else {
+    state.orderUnchecked = 'oall' in d ? [] : ctx.items.map((i) => i.product);
+  }
+  state.saved.set(`order:${storeKey(ctx.market)}`, state.orderUnchecked);
+  render();
+}
+
+async function shareOrder(share) {
+  const ctx = orderContext();
+  if (!ctx) return;
+  const text = orderListText(ctx.market.store_name, ctx.items, state.orderUnchecked);
+  try {
+    if (share && navigator.share) await navigator.share({ text });
+    else await navigator.clipboard.writeText(text);
+  } catch { /* the user cancelled or the browser refused; nothing to do */ }
+}
+
 function readDiaryInputs() {
   const meal = $('#d-meal'); const note = $('#d-note');
   if (meal) state.diaryForm.meal = meal.value;
@@ -235,6 +292,7 @@ document.addEventListener('input', (e) => {
 
 document.addEventListener('change', (e) => {
   if (!state.ready) return;
+  if (e.target.dataset?.ocheck !== undefined) { toggleOrder(e.target.dataset); return; }
   if (e.target.id === 'loc-auto') { state.location.autoDetect = e.target.checked; state.saved.set('location', state.location); state.markets = { status: 'idle', data: null, error: '' }; render(); }
   if (e.target.id === 'loc-city') { state.location.cityId = e.target.value; state.saved.set('location', state.location); state.markets = { status: 'idle', data: null, error: '' }; render(); }
   if (e.target.id === 'f-kosher' || e.target.id === 'f-share') readProfileInputs();
@@ -255,12 +313,16 @@ async function start(user) {
   state.severity = state.saved.get('severity', {});
   state.analysis = state.saved.get('analysis', null);
   state.diary = state.saved.get('diary', []);
+  state.config = resolveConfig(state.saved.get('config', null));
+  state.dismissedAnnouncement = state.saved.get('dismissedAnnouncement', '');
   $('#shell').classList.remove('hidden');
   state.conditions = await loadConditions();
   state.selected = state.selected.slice(0, maxConditions(plan()));
   state.ready = true;
   if (!location.hash) location.hash = state.saved.get('route', '#/home');
   render();
+  refreshConfig();
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') refreshConfig(); });
 }
 
 if (DEMO) {
