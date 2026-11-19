@@ -25,6 +25,9 @@ export function trialDaysLeft(user, now = Date.now(), trialDays = TRIAL_DAYS) {
   return left > 0 ? Math.min(left, trialDays) : null;
 }
 
+/** Nothing selected means nothing to show: a leftover analysis stays hidden until a condition is chosen again. */
+export const visibleAnalysis = (selected, analysis) => (Array.isArray(selected) && selected.length > 0 ? analysis ?? null : null);
+
 export const maxConditions = (plan) => MAX_CONDITIONS[plan] ?? 1;
 export const allows = (plan, feature) => PLAN_ORDER.indexOf(plan) >= PLAN_ORDER.indexOf(FEATURE_MIN_PLAN[feature] ?? 'premium');
 
@@ -114,6 +117,34 @@ export function approvedProducts(analysis, query = '') {
   return foods
     .filter((f) => !q || f.name_he.toLowerCase().includes(q))
     .sort((a, b) => a.category_he.localeCompare(b.category_he, 'he') || a.name_he.localeCompare(b.name_he, 'he'));
+}
+
+// ---- diary: does this meal suit the user? -----------------------------------------------------------------------------
+const PREFIXES = ['', 'ה', 'ו', 'ב', 'ל', 'כ', 'ש', 'מ', 'וה', 'שה', 'בה', 'לה', 'וב', 'ול'];
+const words = (text) => String(text ?? '').toLowerCase().replace(/[\u0591-\u05C7]/g, '').split(/[^\p{L}\p{N}]+/u).filter(Boolean);
+/** "שום ובצל" or "תפוחים, אגסים" is a list of foods; each part is matched on its own. */
+const foodParts = (name) => String(name ?? '').split(/[,/;]|\s+ו(?=\S)/).map(words).filter((w) => w.length);
+const mentions = (set, tokens) => tokens.every((t) => PREFIXES.some((p) => set.has(p + t)));
+const matchesFood = (set, name) => foodParts(name).some((tokens) => mentions(set, tokens));
+
+/**
+ * Judges a diary meal against the analysis the user already has, on the device. Whole words only (with Hebrew one-letter
+ * prefixes); foods the analysis does not mention are 'unknown' rather than guessed.
+ */
+export function assessMeal(meal, analysis) {
+  const matrix = analysis?.food_matrix;
+  if (!matrix) return { fit: 'no_analysis', good: [], avoid: [], hidden: [] };
+  const set = new Set(words(meal));
+  if (!set.size) return { fit: 'unknown', good: [], avoid: [], hidden: [] };
+  const good = (matrix.allowed_foods ?? []).filter((f) => matchesFood(set, f.name_he));
+  const avoid = (matrix.forbidden_foods ?? []).filter((f) => matchesFood(set, f.name_he));
+  const hidden = (matrix.hidden_conflict_alerts ?? []).filter((a) => matchesFood(set, a.item_he));
+  let fit;
+  if (!good.length && !avoid.length && !hidden.length) fit = 'unknown';
+  else if (!avoid.length && !hidden.length) fit = 'good';
+  else if (!good.length) fit = 'avoid';
+  else fit = 'mixed';
+  return { fit, good, avoid, hidden };
 }
 
 export const shekel = (n) => `₪${Number(n).toFixed(2)}`;

@@ -1,7 +1,7 @@
 import { resolvePlatform, isLocalHost } from '../assets/js/router.js';
 import { authConfigured, onUser, getIdToken, signOut } from '../assets/js/auth.js';
 import {
-  effectivePlan, trialDaysLeft, maxConditions, validateProfile, isComplete, toRequestProfile, resolveLocation,
+  effectivePlan, trialDaysLeft, visibleAnalysis, maxConditions, validateProfile, isComplete, toRequestProfile, resolveLocation,
   approvedProducts, addDiaryEntry, SAMPLE_DIETITIANS, DEFAULT_CITY_ID,
   resolveConfig, featureVisible, orderItems, orderListText, storeKey,
 } from './js/logic.js';
@@ -26,7 +26,7 @@ const state = {
   user: null, ready: false, saved: null, api: null,
   conditions: [], selected: [], severity: {}, query: '', analysis: null, demoData: false, error: '', errorUpgrade: false, loading: false,
   swaps: {}, profile: { ...EMPTY_PROFILE }, location: { autoDetect: true, cityId: DEFAULT_CITY_ID }, fix: null,
-  markets: { status: 'idle', data: null, error: '' }, diary: [], diaryForm: { meal: '', symptoms: [], severity: 1, note: '' },
+  markets: { status: 'idle', data: null, error: '' }, diary: [], diaryOpen: null, diaryForm: { meal: '', symptoms: [], severity: 1, note: '' },
   step: 0, errors: [], year: new Date().getFullYear(),
   config: resolveConfig(null), dismissedAnnouncement: '', orderIndex: null, orderUnchecked: [],
 };
@@ -34,7 +34,7 @@ const state = {
 const now = () => Date.now();
 const plan = () => effectivePlan(state.user, now(), state.config.settings.trial_days, state.config.settings.trial_plan);
 const viewModel = () => ({
-  ...state, plan: plan(), trialLeft: trialDaysLeft(state.user, now(), state.config.settings.trial_days), resolved: resolveLocation(state.location, state.fix),
+  ...state, analysis: visibleAnalysis(state.selected, state.analysis), plan: plan(), trialLeft: trialDaysLeft(state.user, now(), state.config.settings.trial_days), resolved: resolveLocation(state.location, state.fix),
 });
 
 // ---- data ------------------------------------------------------------------------------------------------------
@@ -210,6 +210,7 @@ document.addEventListener('click', (e) => {
   if (d.dietitian) { location.hash = `#/dietitian/${encodeURIComponent(d.dietitian)}`; return; }
   if (d.symptom) { state.diaryForm.symptoms = pick(state.diaryForm.symptoms, d.symptom); readDiaryInputs(); render(); return; }
   if (d.dsev) { state.diaryForm.severity = Number(d.dsev); readDiaryInputs(); render(); return; }
+  if (d.dopen !== undefined) { state.diaryOpen = String(state.diaryOpen) === d.dopen ? null : d.dopen; render(); return; }
   if (d.ddel) { state.diary = state.diary.filter((x) => String(x.id) !== d.ddel); state.saved.set('diary', state.diary); render(); return; }
   for (const [attr, key] of [['sex', 'sex'], ['activity', 'activity'], ['goal', 'goal'], ['diet', 'diet'], ['pregnancy', 'pregnancy']]) {
     if (d[attr] !== undefined) {

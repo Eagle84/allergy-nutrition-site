@@ -1,7 +1,7 @@
 // Screens as pure functions: view-model in, HTML string out. Every dynamic value goes through esc() (text) or a URL
 // builder that only allows https/http, so nothing from the server, the user's profile or Google can inject markup.
 import {
-  FEATURES, allows, maxConditions, CITIES, SYMPTOMS, SEVERITY_LABELS,
+  FEATURES, assessMeal, allows, maxConditions, CITIES, SYMPTOMS, SEVERITY_LABELS,
   SEX_VALUES, ACTIVITY_VALUES, GOAL_VALUES, DIET_VALUES, PREGNANCY_VALUES,
   approvedProducts, shekel, safeHttpUrl, isComplete, validateProfile,
   anonymousLabel, starsText, averageRating, ratingLabel, reviewsSummary, dietitiansFor,
@@ -239,6 +239,23 @@ export function dietitianDetail(v, d) {
 }
 
 // ---- diary ---------------------------------------------------------------------------------------------------------
+const FIT_HEADLINE = {
+  no_analysis: 'בחרו מצבים ובצעו ניתוח כדי לראות אם זה מתאים לכם.',
+  unknown: 'אין מידע על המזון הזה בניתוח שלכם, ולכן אין המלצה.',
+  good: '✅ מתאים למצבים שבחרתם',
+  mixed: '⚖️ חלק מתאים וחלק כדאי להימנע ממנו',
+  avoid: '⛔ כדאי להימנע, לפי המצבים שבחרתם',
+};
+
+export function mealVerdict(meal, analysis) {
+  const r = assessMeal(meal, analysis);
+  return `<div class="verdict" data-verdict="${r.fit}"><b>${esc(FIT_HEADLINE[r.fit])}</b>
+    ${r.avoid.map((a) => `<div><b>⛔ ${esc(a.name_he)} · ${esc(a.warning_badge_he)}</b><div class="sub" style="margin:0">${esc(a.scientific_rationale_he)}</div>${a.safe_substitute_he ? `<div class="sub" style="margin:0">במקום זה: ${esc(a.safe_substitute_he)}</div>` : ''}</div>`).join('')}
+    ${r.hidden.map((h) => `<div><b>⚠️ ${esc(h.title_he)}</b><div class="sub" style="margin:0">${esc(h.explanation_he)}</div></div>`).join('')}
+    ${r.good.map((g) => `<div><b>✅ ${esc(g.name_he)} · ${esc(g.benefit_badge_he)}</b><div class="sub" style="margin:0">${esc(g.scientific_rationale_he)}</div></div>`).join('')}
+    ${r.fit === 'no_analysis' ? '' : '<small class="sub" style="margin:0">ההתאמה מבוססת על הניתוח שלכם ואינה ייעוץ רפואי.</small>'}</div>`;
+}
+
 export function diary(v) {
   const f = v.diaryForm ?? { symptoms: [], severity: 1 };
   return `<div class="screen">${topBar()}<h2 class="t">יומן</h2><p class="sub">ארוחות ותסמינים · נשמר במכשיר זה בלבד</p>
@@ -249,7 +266,7 @@ export function diary(v) {
       <label class="lab" for="d-note">הערה</label><textarea class="inp" id="d-note" maxlength="500" rows="2">${esc(f.note ?? '')}</textarea>
       <button class="cta" style="margin:0" id="d-save">שמור ביומן</button></div>
     <div style="display:flex;flex-direction:column;gap:8px;padding:0 18px">${v.diary.map((e) => `<div class="card" style="padding:10px 12px"><small class="sub" style="margin:0">${esc(new Date(e.atMs).toLocaleString('he-IL'))}</small>
-      ${e.meal ? `<div><b>🍽️ ${esc(e.meal)}</b></div>` : ''}${e.symptoms.length ? `<div class="symp">⚠️ ${esc(e.symptoms.join(', '))} · ${esc(SEVERITY_LABELS[e.severity - 1] ?? '')}</div>` : ''}${e.note ? `<div class="sub" style="margin:0">${esc(e.note)}</div>` : ''}
+      ${e.meal ? `<div><b>🍽️ ${esc(e.meal)}</b></div><button class="swap" data-dopen="${esc(e.id)}" aria-expanded="${String(v.diaryOpen) === String(e.id)}">${String(v.diaryOpen) === String(e.id) ? 'הסתר' : 'האם זה מתאים לי?'}</button>${String(v.diaryOpen) === String(e.id) ? mealVerdict(e.meal, v.analysis) : ''}` : ''}${e.symptoms.length ? `<div class="symp">⚠️ ${esc(e.symptoms.join(', '))} · ${esc(SEVERITY_LABELS[e.severity - 1] ?? '')}</div>` : ''}${e.note ? `<div class="sub" style="margin:0">${esc(e.note)}</div>` : ''}
       <button class="swap" data-ddel="${esc(e.id)}">מחק</button></div>`).join('') || '<p class="sub">עדיין אין רשומות.</p>'}</div></div>`;
 }
 
