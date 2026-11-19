@@ -33,6 +33,19 @@ export function androidLaunchUrl(fallback = PLAY_URL) {
   return `intent://open#Intent;scheme=${APP_SCHEME};package=${PACKAGE_ID};S.browser_fallback_url=${encodeURIComponent(fallback)};end`;
 }
 
+/**
+ * Google refuses OAuth sign-in inside embedded browsers (Facebook, Instagram, WhatsApp... and bare web views) and shows
+ * "this browser or app may not be secure". Detecting them lets the page send people to a real browser first.
+ */
+export function detectInAppBrowser(userAgent = '') {
+  if (!userAgent) return false;
+  if (/FBAN|FBAV|FB_IAB|FBIOS|Instagram|MicroMessenger|Snapchat|musical_ly|BytedanceWebview|LinkedInApp|Line\//i.test(userAgent)) return true;
+  if (/Android/i.test(userAgent) && /;\s*wv\)/.test(userAgent)) return true;
+  // iOS browsers all carry a "Safari/" token; a web view embedded in another app does not.
+  if (/iPhone|iPad|iPod/i.test(userAgent) && !/Safari\//.test(userAgent)) return true;
+  return false;
+}
+
 export function isLocalHost(hostname) {
   return hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '[::1]';
 }

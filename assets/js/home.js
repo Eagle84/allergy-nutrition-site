@@ -1,4 +1,4 @@
-import { resolvePlatform, androidLaunchUrl, PLAY_URL } from './router.js';
+import { resolvePlatform, androidLaunchUrl, detectInAppBrowser, PLAY_URL } from './router.js';
 import { authConfigured, onUser, signInWithGoogle, signOut } from './auth.js';
 
 const $ = (id) => document.getElementById(id);
@@ -20,8 +20,14 @@ if (platform === 'android') {
 
 if (platform === 'ios') {
   const msg = $('auth-msg');
+  const inApp = detectInAppBrowser(navigator.userAgent);
+  if (inApp) $('inapp').classList.remove('hidden');
+  $('copy-link').addEventListener('click', async () => {
+    try { await navigator.clipboard.writeText(location.href); $('copy-link').textContent = 'הקישור הועתק ✓'; } catch { $('copy-link').textContent = location.href; }
+  });
   $('google').addEventListener('click', async () => {
     msg.classList.add('hidden');
+    if (inApp) { $('inapp').classList.remove('hidden'); $('inapp').scrollIntoView({ behavior: 'smooth', block: 'center' }); return; }
     try {
       const user = await signInWithGoogle();
       if (user) window.location.href = 'app/';
