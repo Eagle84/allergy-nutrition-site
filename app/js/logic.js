@@ -10,11 +10,13 @@ export const FEATURES = { MEAL_PLAN: 'meal_plan', BOOKLET: 'booklet', PRICE_COMP
 const MAX_CONDITIONS = { free: 1, basic: 3, pro: 8, premium: 8 };
 const FEATURE_MIN_PLAN = { meal_plan: 'basic', booklet: 'basic', price_compare: 'basic', dietitian_identity: 'premium' };
 
-/** Admins always have everything; a new account gets 7 days of Pro, counted from its first sign-in; then Free. */
-export function effectivePlan(user, now = Date.now(), trialDays = TRIAL_DAYS) {
+export const TRIAL_PLAN = 'basic';
+
+/** Admins always have everything; a new account gets a trial of the trial tier (one level above Free) counted from its first sign-in; then Free. */
+export function effectivePlan(user, now = Date.now(), trialDays = TRIAL_DAYS, trialPlan = TRIAL_PLAN) {
   if (user?.admin) return 'premium';
   if (user?.createdAtMs == null) return 'free';
-  return now - user.createdAtMs < trialDays * DAY ? 'pro' : 'free';
+  return now - user.createdAtMs < trialDays * DAY ? trialPlan : 'free';
 }
 
 export function trialDaysLeft(user, now = Date.now(), trialDays = TRIAL_DAYS) {
@@ -231,7 +233,8 @@ export const FLAG_DEFAULTS = {
   'feature.dietitians': true, 'feature.diary': true, 'feature.online_order': false,
   'mock.dietitians': true, 'mock.products': true, 'mock.markets': true, maintenance: false,
 };
-export const SETTING_DEFAULTS = { announcement: '', maintenance_message: '', min_android_version_code: 0, free_weekly_analyses: 2, trial_days: 7 };
+export const SETTING_DEFAULTS = { announcement: '', maintenance_message: '', min_android_version_code: 0, free_weekly_analyses: 2, trial_days: 7, trial_plan: 'basic' };
+const CHOICES = { trial_plan: ['basic', 'pro', 'premium'] };
 const INT_RANGES = { min_android_version_code: [0, 10_000_000], free_weekly_analyses: [0, 1000], trial_days: [0, 365] };
 const MAX_CONFIG_TEXT = 300;
 
@@ -245,7 +248,8 @@ export function resolveConfig(raw) {
   const settings = {};
   for (const [k, d] of Object.entries(SETTING_DEFAULTS)) {
     const v = setIn[k];
-    if (k in INT_RANGES) settings[k] = Number.isInteger(v) && v >= INT_RANGES[k][0] && v <= INT_RANGES[k][1] ? v : d;
+    if (k in CHOICES) settings[k] = CHOICES[k].includes(v) ? v : d;
+    else if (k in INT_RANGES) settings[k] = Number.isInteger(v) && v >= INT_RANGES[k][0] && v <= INT_RANGES[k][1] ? v : d;
     else settings[k] = typeof v === 'string' ? v.slice(0, MAX_CONFIG_TEXT) : d;
   }
   return { flags, settings };

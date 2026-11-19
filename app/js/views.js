@@ -35,9 +35,11 @@ export const planGate = (what) => `<div class="card gate"><div style="font-size:
 
 const errorBox = (v) => (v.error ? `<div class="alert" role="alert">⚠️ <span>${esc(v.error)}</span>${v.errorUpgrade ? '<button class="swap" data-go="#/plans">שדרגו</button>' : ''}</div>` : '');
 
+const PLAN_NAMES = { basic: 'בסיס', pro: 'פרו', premium: 'פרימיום' };
+
 function planPill(v) {
   if (v.user?.admin) return '<div class="pillrow">מנהל · גישה מלאה ללא תשלום</div>';
-  if (v.trialLeft) return `<div class="pillrow warn">נותרו ${v.trialLeft} ימים לניסיון החינמי</div>`;
+  if (v.trialLeft) return `<div class="pillrow warn">נותרו ${v.trialLeft} ימים לניסיון חינם של תוכנית ${PLAN_NAMES[v.plan] ?? ''}</div>`;
   if (v.plan === 'free') return '<div class="pillrow warn">תוכנית חינמית · <a href="#/plans" style="color:inherit">שדרגו</a></div>';
   return '';
 }
@@ -308,7 +310,7 @@ const PLAN_CARDS = [
 
 export function plans(v) {
   return `<div class="screen">${topBar()}<h2 class="t">תוכניות ומחירים</h2>
-    ${v.trialLeft ? `<div class="pillrow">נותרו ${v.trialLeft} ימים לניסיון חינם של תוכנית פרו</div>` : ''}
+    ${v.trialLeft ? `<div class="pillrow">נותרו ${v.trialLeft} ימים לניסיון חינם של תוכנית ${PLAN_NAMES[v.plan] ?? ''}</div>` : ''}
     ${PLAN_CARDS.map(([id, name, price, tag, feats]) => `<div class="card plancard ${v.plan === id ? 'cur' : ''}"><div class="ph"><div><b>${name}</b><small>${tag}</small></div><div class="pp">${price}${v.plan === id ? '<span class="here">התוכנית שלך</span>' : ''}</div></div>${feats.map((f) => `<div>✓ ${esc(f)}</div>`).join('')}</div>`).join('')}
     <p class="disc">הרכישה תיפתח בקרוב · ביטול בכל עת, ללא התחייבות. המחירים כוללים מע״מ ועשויים להשתנות לפני ההשקה. האפליקציה באנדרואיד תומכת ברכישה דרך Google Play.</p></div>`;
 }

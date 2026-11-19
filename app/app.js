@@ -32,7 +32,7 @@ const state = {
 };
 
 const now = () => Date.now();
-const plan = () => effectivePlan(state.user, now(), state.config.settings.trial_days);
+const plan = () => effectivePlan(state.user, now(), state.config.settings.trial_days, state.config.settings.trial_plan);
 const viewModel = () => ({
   ...state, plan: plan(), trialLeft: trialDaysLeft(state.user, now(), state.config.settings.trial_days), resolved: resolveLocation(state.location, state.fix),
 });
