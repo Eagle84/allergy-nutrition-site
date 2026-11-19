@@ -29,7 +29,18 @@ export async function onUser(cb) {
 }
 
 async function toUser(u) {
-  return { uid: u.uid, email: u.email, name: u.displayName, photo: u.photoURL, admin: await isAdminEmail(u.email, u.emailVerified) };
+  const created = Date.parse(u.metadata?.creationTime ?? '');
+  return {
+    uid: u.uid, email: u.email, name: u.displayName, photo: u.photoURL, admin: await isAdminEmail(u.email, u.emailVerified),
+    createdAtMs: Number.isFinite(created) ? created : null,
+  };
+}
+
+/** A fresh Firebase ID token for the signed-in account (refreshed by the SDK when near expiry), or null when signed out. */
+export async function getIdToken() {
+  if (!firebaseConfig) return null;
+  const { auth } = await load();
+  return auth.currentUser ? auth.currentUser.getIdToken() : null;
 }
 
 export async function signInWithGoogle() {
