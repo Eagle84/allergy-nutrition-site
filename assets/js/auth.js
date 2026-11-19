@@ -62,6 +62,19 @@ export async function signInWithGoogle() {
   return user;
 }
 
+/** Asks the person to confirm with Google again, then removes the sign-in account itself. Call before the server record is erased. */
+export async function reauthenticate() {
+  const { auth, authMod } = await load();
+  const provider = new authMod.GoogleAuthProvider();
+  provider.setCustomParameters({ prompt: 'select_account' });
+  await authMod.reauthenticateWithPopup(auth.currentUser, provider);
+}
+
+export async function deleteAuthAccount() {
+  const { auth, authMod } = await load();
+  await authMod.deleteUser(auth.currentUser);
+}
+
 export async function signOut() {
   const { auth, authMod } = await load();
   await authMod.signOut(auth);

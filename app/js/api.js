@@ -46,6 +46,7 @@ export function createApi({ base = API_BASE, getToken, fetchFn = (...a) => fetch
     let res;
     try { res = await fetchFn(`${base}${path}`, init); } catch { throw new ApiError('network'); }
     if (!res.ok) throw toError(res.status, await readBody(res));
+    if (res.status === 204) return {};
     const body = await readBody(res);
     if (body === null) throw new ApiError('server');
     return body;
@@ -54,6 +55,7 @@ export function createApi({ base = API_BASE, getToken, fetchFn = (...a) => fetch
   return {
     conditions: () => call('GET', '/api/v1/conditions'),
     config: () => call('GET', '/api/v1/config'),
+    deleteAccount: () => call('DELETE', '/api/v1/account'),
     analyze: (req) => call('POST', '/api/v1/analyze-profile', req),
     marketsTop: ({ foods, lat, lng, label, limit = 3 }) => call('POST', '/api/v1/markets/top', { foods, lat, lng, label, limit }),
   };

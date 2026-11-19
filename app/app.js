@@ -1,5 +1,5 @@
 import { resolvePlatform, isLocalHost } from '../assets/js/router.js';
-import { authConfigured, onUser, getIdToken, signOut } from '../assets/js/auth.js';
+import { authConfigured, onUser, getIdToken, signOut, reauthenticate, deleteAuthAccount } from '../assets/js/auth.js';
 import {
   effectivePlan, trialDaysLeft, visibleAnalysis, cleanProfile, maxConditions, validateProfile, isComplete, toRequestProfile, resolveLocation,
   approvedProducts, addDiaryEntry, SAMPLE_DIETITIANS, DEFAULT_CITY_ID,
@@ -172,7 +172,6 @@ function render() {
 
 function onRouteChange() {
   if (!state.ready) return;
-  if (location.hash !== '#/onboarding' && !mustOnboard()) state.saved.set('route', location.hash || '#/home');
   if (!location.hash.startsWith('#/settings')) state.errors = [];
   window.scrollTo(0, 0);
   render();
@@ -244,7 +243,22 @@ document.addEventListener('click', (e) => {
     render(); return;
   }
   if (t.id === 'sign-out') { state.saved?.clear(); signOut().finally(() => location.replace('../')); }
+  if (t.id === 'delete-account') { deleteAccount(); }
 });
+
+async function deleteAccount() {
+  if (!window.confirm('למחוק לצמיתות את החשבון, הנתונים שבשרת והנתונים השמורים בדפדפן? לא ניתן לשחזר.')) return;
+  try {
+    await reauthenticate();
+    await state.api.deleteAccount();
+    await deleteAuthAccount();
+  } catch {
+    window.alert('המחיקה לא הושלמה. אשרו את החשבון ונסו שוב.');
+    return;
+  }
+  state.saved?.clear();
+  location.replace('../');
+}
 
 function orderContext() {
   const market = state.markets.data?.markets?.[state.orderIndex ?? -1];
@@ -320,7 +334,7 @@ async function start(user) {
   state.conditions = await loadConditions();
   state.selected = state.selected.slice(0, maxConditions(plan()));
   state.ready = true;
-  if (!location.hash) location.hash = state.saved.get('route', '#/home');
+  if (!location.hash) location.hash = '#/home';
   render();
   refreshConfig();
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') refreshConfig(); });

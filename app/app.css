@@ -9,6 +9,7 @@ h2.t{font-size:26px;font-weight:900;margin:8px 18px 0;letter-spacing:-.4px;line-
 .search{margin:4px 18px 0;background:#fff;border-radius:16px;height:48px;display:flex;align-items:center;gap:8px;padding:0 14px;box-shadow:0 2px 8px rgba(14,27,35,.06)}
 .search input{flex:1;border:0;outline:0;font:inherit;font-size:15px;background:transparent;color:var(--ink)}
 .chips{display:flex;flex-wrap:wrap;gap:8px;padding:0 18px}
+.chips-2{display:grid;grid-auto-flow:column;grid-template-rows:repeat(2,auto);justify-content:start;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:6px}
 .chip{background:var(--chip-idle);color:#8A979D;border-radius:999px;padding:8px 14px;font-size:14px;display:flex;align-items:center;gap:6px;white-space:nowrap}
 .chip.on{background:var(--chip);color:var(--ink);font-weight:800}
 .chip .ck{width:17px;height:17px;border-radius:50%;background:var(--check);color:#fff;display:inline-grid;place-items:center;font-size:11px}
