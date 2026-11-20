@@ -55,6 +55,7 @@ export function createApi({ base = API_BASE, getToken, fetchFn = (...a) => fetch
   return {
     conditions: () => call('GET', '/api/v1/conditions'),
     config: () => call('GET', '/api/v1/config'),
+    foodImages: () => call('GET', '/api/v1/food-images'),
     deleteAccount: () => call('DELETE', '/api/v1/account'),
     analyze: (req) => call('POST', '/api/v1/analyze-profile', req),
     marketsTop: ({ foods, lat, lng, label, limit = 3 }) => call('POST', '/api/v1/markets/top', { foods, lat, lng, label, limit }),

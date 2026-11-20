@@ -41,6 +41,7 @@ const viewModel = () => ({
 const demoApi = {
   conditions: async () => (await fetch('conditions.json')).json(),
   config: async () => ({ flags: { 'feature.online_order': true }, settings: {} }),
+  foodImages: async () => null,
   analyze: async () => (await fetch('sample-analysis.json')).json(),
   marketsTop: async () => ({
     available: true, source: 'נתוני דוגמה', as_of: null, location: { lat: 32.08, lng: 34.78, label: null }, disclaimer: 'נתוני דוגמה בלבד.',
@@ -63,6 +64,19 @@ async function refreshConfig() {
   } catch { /* keep the cached or default configuration */ }
   render();
 }
+
+async function refreshFoodImages() {
+  try {
+    const raw = await state.api.foodImages();
+    if (V.setFoodImages(raw)) { state.saved.set('foodImages', raw); render(); }
+  } catch { /* keep the saved list, or the emoji */ }
+}
+
+// A photo that cannot load falls back to its emoji (inline handlers are blocked by the page's security policy).
+document.addEventListener('error', (e) => {
+  const t = e.target;
+  if (t?.classList?.contains('fimg')) t.replaceWith(document.createTextNode(t.dataset.emoji || ''));
+}, true);
 
 async function analyze() {
   if (state.loading) return;
@@ -357,6 +371,7 @@ async function start(user) {
   state.analysis = state.saved.get('analysis', null);
   state.diary = state.saved.get('diary', []);
   state.config = resolveConfig(state.saved.get('config', null));
+  V.setFoodImages(state.saved.get('foodImages', null));
   state.dismissedAnnouncement = state.saved.get('dismissedAnnouncement', '');
   $('#shell').classList.remove('hidden');
   state.conditions = await loadConditions();
@@ -364,7 +379,7 @@ async function start(user) {
   state.ready = true;
   if (!location.hash) location.hash = '#/home';
   render();
-  refreshConfig();
+  refreshConfig(); refreshFoodImages();
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') refreshConfig(); });
 }
 

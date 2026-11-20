@@ -27,6 +27,21 @@ const EMOJI = [[/(^|\s)דג(ים)?(\s|$)|סלמון|טונה|סרדינ/, '🐟'
 const CAT_EMOJI = { 'דגנים ופחמימות': '🌾', 'דגים ופירות ים': '🐟', 'ירקות': '🥦', 'ירקות ותבלינים': '🥦', 'פירות': '🍎', 'מוצרי חלב': '🥛', 'בשר ועוף': '🍗', 'קטניות': '🫘', 'אגוזים וזרעים': '🌰', 'ביצים': '🥚', 'משקאות': '🥤', 'ממתקים': '🍬', 'שמנים': '🫒' };
 export const emoji = (name, cat = '') => (EMOJI.find(([re]) => re.test(name)) || [0, CAT_EMOJI[cat] || '🍽️'])[1];
 
+let foodImages = { base: '', files: {} };
+const IMAGE_FILE = /^[a-z0-9_]+\.webp$/;
+/** Which foods have a photo (GET /api/v1/food-images). Returns true when the list was usable; an address that is not https or a file name that could point elsewhere is dropped. */
+export function setFoodImages(raw) {
+  const base = raw && typeof raw === 'object' ? raw.base_url : null;
+  if (typeof base !== 'string' || !base.startsWith('https://') || !base.endsWith('/') || !raw.images || typeof raw.images !== 'object') { foodImages = { base: '', files: {} }; return false; }
+  foodImages = { base, files: Object.fromEntries(Object.entries(raw.images).filter(([, f]) => typeof f === 'string' && IMAGE_FILE.test(f))) };
+  return true;
+}
+/** A food's picture: the photo when there is one (the emoji replaces it if it cannot load), else the emoji. */
+export const foodThumb = (name, cat = '') => {
+  const e = emoji(name, cat); const file = foodImages.files[String(name ?? '').trim()];
+  return file ? `<img class="fimg" src="${esc(foodImages.base + file)}" alt="" loading="lazy" decoding="async" data-emoji="${e}">` : e;
+};
+
 const topBar = (back = '#/home') => `<div class="top"><button class="back" data-go="${back}" aria-label="חזרה">→</button><span></span></div>`;
 
 export const needAnalysis = () => `<div class="center"><div style="font-size:54px">🔎</div><b>עדיין אין ניתוח</b><span class="sub">בחרו מצבים במסך הבית והתחילו ניתוח.</span><button class="cta" style="width:220px" data-go="#/home">למסך הבית</button></div>`;
@@ -112,8 +127,8 @@ export function analysisView(v) {
       ${ca.nutritional_deficiency_risks.map((d) => `<div class="sub" style="margin:6px 0 0">${esc(d.nutrient_he)}: סיכון ${Math.round(d.risk_prevalence_pct)}% · יעד ${esc(d.recommended_daily_target)}</div>`).join('')}</div>
     ${personalBlock(a.personalization)}
     ${fm.hidden_conflict_alerts.length ? `<div class="alert">⚠️ <span><b>התנגשות בין מצבים:</b> ${fm.hidden_conflict_alerts.map((x) => esc(x.item_he)).join(', ')}</span></div>` : ''}
-    <div class="two"><div class="lst"><h5>מותר</h5>${fm.allowed_foods.slice(0, 4).map((f) => `<div>${emoji(f.name_he, f.category_he)} ${esc(f.name_he)}</div>`).join('')}</div>
-      <div class="lst no"><h5>אסור / טריגרים</h5>${fm.forbidden_foods.slice(0, 4).map((f) => `<div>${emoji(f.name_he, f.category_he)} ${esc(f.name_he)}</div>`).join('')}</div></div>
+    <div class="two"><div class="lst"><h5>מותר</h5>${fm.allowed_foods.slice(0, 4).map((f) => `<div>${foodThumb(f.name_he, f.category_he)} ${esc(f.name_he)}</div>`).join('')}</div>
+      <div class="lst no"><h5>אסור / טריגרים</h5>${fm.forbidden_foods.slice(0, 4).map((f) => `<div>${foodThumb(f.name_he, f.category_he)} ${esc(f.name_he)}</div>`).join('')}</div></div>
     ${disclaimer(v)}</div>`;
 }
 
@@ -123,7 +138,7 @@ export function matrix(v) {
   const fm = a.food_matrix;
   const q = v.query.trim().toLowerCase();
   const f = (x) => !q || x.name_he.toLowerCase().includes(q);
-  const card = (x, ok) => `<div class="fcard"><div class="t"><span>${ok ? '' : '⚠ '}${esc(x.name_he)}</span><span class="e">${emoji(x.name_he, x.category_he)}</span></div>
+  const card = (x, ok) => `<div class="fcard"><div class="t"><span>${ok ? '' : '⚠ '}${esc(x.name_he)}</span><span class="e">${foodThumb(x.name_he, x.category_he)}</span></div>
     <span class="badge">${esc(ok ? x.benefit_badge_he : x.warning_badge_he)}</span><a class="cite" href="${pmidUrl(x.citation_pmid)}" target="_blank" rel="noopener noreferrer">↗ מבוסס מחקר</a></div>`;
   return `<div class="screen"><h2 class="t" style="text-align:center">מותר ואסור</h2>
     <label class="search">🔍<input id="q" value="${esc(v.query)}" placeholder="חפש מזון..." autocomplete="off"></label>
@@ -199,7 +214,7 @@ export function products(v) {
   return `<div class="screen">${topBar()}<h2 class="t">מוצרים מאושרים</h2><p class="sub">מזונות שנבדקו מול המחקרים עבור הפרופיל שלכם</p>
     <label class="search">🔍<input id="q" value="${esc(v.query)}" placeholder="חפש מוצר..." autocomplete="off"></label>
     ${prices}
-    ${[...byCat].map(([cat, foods]) => `<b style="margin:6px 18px 0">${emoji('', cat)} ${esc(cat)}</b><div class="pgrid">${foods.map((f) => `<div class="card pcard"><div class="pe">${emoji(f.name_he, f.category_he)}</div><b>${esc(f.name_he)}</b><span class="badge">${esc(f.benefit_badge_he)}</span><a class="cite" href="${pmidUrl(f.citation_pmid)}" target="_blank" rel="noopener noreferrer">↗ מחקר</a></div>`).join('')}</div>`).join('') || '<p class="sub">לא נמצאו מוצרים.</p>'}
+    ${[...byCat].map(([cat, foods]) => `<b style="margin:6px 18px 0">${emoji('', cat)} ${esc(cat)}</b><div class="pgrid">${foods.map((f) => `<div class="card pcard"><div class="pe">${foodThumb(f.name_he, f.category_he)}</div><b>${esc(f.name_he)}</b><span class="badge">${esc(f.benefit_badge_he)}</span><a class="cite" href="${pmidUrl(f.citation_pmid)}" target="_blank" rel="noopener noreferrer">↗ מחקר</a></div>`).join('')}</div>`).join('') || '<p class="sub">לא נמצאו מוצרים.</p>'}
     ${disclaimer(v)}</div>`;
 }
 
